@@ -1,0 +1,84 @@
+{
+  "campaigns": [
+    {
+      "id": "cmp_serum_push",
+      "name": "Serum push",
+      "window_start": "2026-01-01T00:00:00.000Z",
+      "window_end": "2027-01-01T00:00:00.000Z",
+      "target": {
+        "kind": "sku",
+        "sku_ids": [
+          "sku_serum_niacin_30",
+          "sku_serum_vitc_30"
+        ]
+      },
+      "intent": "attach_max_legal_rung",
+      "max_discount_bps_hint": 1500,
+      "active": true,
+      "spend_ceiling_paise": 500000,
+      "spent_paise": 0
+    },
+    {
+      "id": "cmp_basket_builder",
+      "name": "Basket builder",
+      "window_start": "2026-01-01T00:00:00.000Z",
+      "window_end": "2027-01-01T00:00:00.000Z",
+      "target": {
+        "kind": "min_cart_paise",
+        "min_cart_paise": 100000
+      },
+      "intent": "attach_max_legal_rung",
+      "max_discount_bps_hint": 800,
+      "active": true,
+      "spend_ceiling_paise": 300000,
+      "spent_paise": 0
+    },
+    {
+      "id": "cmp_sun_care",
+      "name": "Sun care bundle",
+      "window_start": "2026-01-01T00:00:00.000Z",
+      "window_end": "2027-01-01T00:00:00.000Z",
+      "target": {
+        "kind": "category",
+        "category": "sunscreen"
+      },
+      "intent": "suggest_bundle",
+      "max_discount_bps_hint": 500,
+      "active": true,
+      "spend_ceiling_paise": 200000,
+      "spent_paise": 0
+    },
+    {
+      "id": "cmp_diwali_2025",
+      "name": "Diwali 2025 (expired)",
+      "window_start": "2025-10-01T00:00:00.000Z",
+      "window_end": "2025-11-05T00:00:00.000Z",
+      "target": {
+        "kind": "min_cart_paise",
+        "min_cart_paise": 1
+      },
+      "intent": "attach_max_legal_rung",
+      "max_discount_bps_hint": 1500,
+      "active": true,
+      "spend_ceiling_paise": 250000,
+      "spent_paise": 0
+    },
+    {
+      "id": "cmp_paused_eye",
+      "name": "Eye cream push (paused)",
+      "window_start": "2026-01-01T00:00:00.000Z",
+      "window_end": "2027-01-01T00:00:00.000Z",
+      "target": {
+        "kind": "sku",
+        "sku_ids": [
+          "sku_eye_peptide_15"
+        ]
+      },
+      "intent": "attach_max_legal_rung",
+      "max_discount_bps_hint": 1100,
+      "active": false,
+      "spend_ceiling_paise": 250000,
+      "spent_paise": 0
+    }
+  ]
+}

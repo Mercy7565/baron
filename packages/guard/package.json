@@ -1,0 +1,20 @@
+{
+  "name": "@countersign/guard",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The AI mistake catalog: typed codes, dispositions, and cart validation.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "files": ["src"],
+  "dependencies": {
+    "@countersign/catalog": "workspace:*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

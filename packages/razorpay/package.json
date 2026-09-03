@@ -1,0 +1,20 @@
+{
+  "name": "@countersign/razorpay",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Razorpay API + webhook helpers for CounterSign.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "files": ["src"],
+  "dependencies": {
+    "@countersign/contracts": "workspace:*"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

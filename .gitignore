@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build output
+dist/
+.next/
+out/
+*.tsbuildinfo
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# test / coverage
+coverage/
+
+# editors & OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+.vercel
+
+# local audit log (placeholder until the DB slice)
+.data/

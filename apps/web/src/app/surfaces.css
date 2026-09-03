@@ -1,0 +1,1008 @@
+/* ==========================================================================
+   BARON — COLOUR LOCK
+
+   Five hexes fill everything: surfaces, cards, rails, buttons, borders, bars.
+       mint  #C5E1D4      green #2F8F6B      ink  #24352C
+       rust  #8A3A1C      amber #E8923A
+
+   Black and white appear ONLY as font colour (and placeholder text). Never a
+   background, never a card fill, never a header fill, never a button fill.
+   No navy, no grey fills, no sixth hex.
+
+   Contrast comes from pairing the five, not from tints:
+       ink surface   -> mint / white text
+       mint surface  -> ink / black text, ink hairlines
+       green button  -> white text
+       amber button  -> ink text
+       rust button   -> white text
+   ========================================================================== */
+
+:root {
+  --nl-mint: #c5e1d4;
+  --nl-green: #2f8f6b;
+  --nl-ink: #24352c;
+  --nl-rust: #8a3a1c;
+  --nl-amber: #e8923a;
+
+  /* Semantic roles. Each resolves to one of the five, never to a tint. */
+  --accent: var(--nl-green);
+  --ok: var(--nl-green);
+  --warn: var(--nl-amber);
+  --danger: var(--nl-rust);
+
+  /* Text-only values. Permitted as colour, forbidden as fill. */
+  --on-dark: #ffffff;
+  --on-light: #111111;
+
+  --ui: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ============================== STAGE (logged out) ======================= */
+
+[data-surface="stage"] {
+  background: var(--nl-ink);
+  color: var(--nl-mint);
+  font-family: var(--ui);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-surface="stage"] .sg-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 34px;
+  border-bottom: 1px solid var(--nl-green);
+}
+[data-surface="stage"] .sg-mark {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--on-dark);
+  text-decoration: none;
+}
+[data-surface="stage"] .sg-top a.login {
+  color: var(--nl-ink);
+  background: var(--nl-mint);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--nl-mint);
+  padding: 8px 16px;
+  border-radius: 8px;
+}
+[data-surface="stage"] .sg-top a.login:hover {
+  background: var(--nl-amber);
+  border-color: var(--nl-amber);
+}
+
+[data-surface="stage"] .sg-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 34px 70px;
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+[data-surface="stage"] .sg-quote {
+  font-size: clamp(30px, 4.6vw, 54px);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 600;
+  margin: 0 0 20px;
+  max-width: 20ch;
+  color: var(--nl-mint);
+}
+[data-surface="stage"] .sg-quote em {
+  font-style: normal;
+  color: var(--nl-amber);
+}
+[data-surface="stage"] .sg-quote-2 {
+  font-size: clamp(18px, 2.2vw, 27px);
+  color: var(--on-dark);
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  margin: 0 0 54px;
+}
+
+[data-surface="stage"] .sg-doors {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 720px) {
+  [data-surface="stage"] .sg-doors {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Two doors, two of the five. Green = buy, amber = run the store. */
+[data-surface="stage"] .sg-door {
+  border: 2px solid var(--nl-mint);
+  border-radius: 14px;
+  padding: 34px 32px 30px;
+  background: var(--nl-green);
+  color: var(--on-dark);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+[data-surface="stage"] .sg-door:nth-child(2) {
+  background: var(--nl-amber);
+  color: var(--nl-ink);
+}
+[data-surface="stage"] .sg-door:hover {
+  border-color: var(--nl-amber);
+}
+[data-surface="stage"] .sg-door:nth-child(2):hover {
+  border-color: var(--nl-green);
+}
+[data-surface="stage"] .sg-door:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+[data-surface="stage"] .sg-door .k {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: inherit;
+}
+[data-surface="stage"] .sg-door h2 {
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+  color: inherit;
+}
+[data-surface="stage"] .sg-door p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  color: inherit;
+}
+[data-surface="stage"] .sg-door .go {
+  margin-top: 20px;
+  font-size: 15px;
+  font-weight: 650;
+  color: inherit;
+}
+
+[data-surface="stage"] .sg-foot {
+  color: var(--nl-mint);
+  font-size: 13px;
+  padding: 0 34px 30px;
+  text-align: center;
+}
+
+[data-surface="stage"] input {
+  background: var(--nl-ink);
+  color: var(--nl-mint);
+  border: 1px solid var(--nl-mint);
+}
+[data-surface="stage"] input::placeholder {
+  color: var(--on-dark);
+  opacity: 0.6;
+}
+
+/* ============================== STORE (customer) ======================== */
+
+[data-surface="store"] {
+  background: var(--nl-mint);
+  color: var(--nl-ink);
+  font-family: var(--ui);
+  font-size: 16px;
+  min-height: 100vh;
+}
+
+[data-surface="store"] .st-shell {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 0 28px;
+}
+
+/* The header is ink, matching the stage and the console rail: one company. */
+[data-surface="store"] .st-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 16px 28px;
+  margin: 0 -28px 8px;
+  background: var(--nl-ink);
+}
+[data-surface="store"] .st-nav nav {
+  display: flex;
+  gap: 26px;
+  align-items: center;
+}
+[data-surface="store"] .st-nav a {
+  color: var(--nl-mint);
+  text-decoration: none;
+  font-size: 15px;
+}
+[data-surface="store"] .st-nav a:hover {
+  color: var(--nl-amber);
+}
+[data-surface="store"] .st-mark {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--on-dark);
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+[data-surface="store"] h1 {
+  font-size: clamp(32px, 4.6vw, 52px);
+  font-weight: 650;
+  letter-spacing: -0.028em;
+  line-height: 1.06;
+  margin: 0 0 16px;
+  color: var(--nl-ink);
+}
+[data-surface="store"] h2 {
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--nl-ink);
+}
+[data-surface="store"] .st-lede {
+  font-size: 19px;
+  color: var(--nl-ink);
+  max-width: 54ch;
+  line-height: 1.55;
+}
+[data-surface="store"] .st-muted {
+  color: var(--nl-ink);
+  opacity: 0.72;
+}
+
+[data-surface="store"] .st-btn {
+  display: inline-block;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 13px 26px;
+  border-radius: 10px;
+  border: 2px solid var(--nl-green);
+  background: var(--nl-green);
+  color: var(--on-dark);
+  cursor: pointer;
+  text-decoration: none;
+}
+[data-surface="store"] .st-btn:hover {
+  background: var(--nl-ink);
+  border-color: var(--nl-ink);
+}
+[data-surface="store"] .st-btn--quiet {
+  background: var(--nl-mint);
+  color: var(--nl-ink);
+  border-color: var(--nl-ink);
+}
+[data-surface="store"] .st-btn--quiet:hover {
+  background: var(--nl-amber);
+  border-color: var(--nl-ink);
+}
+
+/* Cards are mint on mint, separated by ink hairlines rather than by a tint. */
+[data-surface="store"] .st-card {
+  border: 1px solid var(--nl-ink);
+  border-radius: 12px;
+  padding: 24px;
+  background: var(--nl-mint);
+}
+
+[data-surface="store"] .st-grid {
+  display: grid;
+  gap: 26px;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+}
+
+[data-surface="store"] .st-note {
+  background: var(--nl-mint);
+  border: 2px solid var(--nl-green);
+  border-radius: 10px;
+  padding: 18px 20px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--nl-ink);
+}
+
+[data-surface="store"] input,
+[data-surface="store"] textarea {
+  background: var(--nl-mint);
+  color: var(--nl-ink);
+  border: 1px solid var(--nl-ink);
+}
+[data-surface="store"] input::placeholder {
+  color: var(--on-light);
+  opacity: 0.55;
+}
+
+[data-surface="store"] a {
+  color: var(--nl-ink);
+}
+
+/* ============================== CONSOLE (merchant) ====================== */
+
+[data-surface="console"] {
+  background: var(--nl-mint);
+  color: var(--nl-ink);
+  font-family: var(--ui);
+  font-size: 13px;
+}
+
+[data-surface="console"] .mc-layout {
+  display: grid;
+  grid-template-columns: 216px 1fr;
+  min-height: 100vh;
+}
+
+[data-surface="console"] .mc-rail {
+  background: var(--nl-ink);
+  color: var(--nl-mint);
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+[data-surface="console"] .mc-rail .mark {
+  color: var(--on-dark);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  padding: 0 10px 4px;
+  text-decoration: none;
+}
+[data-surface="console"] .mc-rail .tag {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nl-amber);
+  font-weight: 700;
+  padding: 0 10px 14px;
+}
+[data-surface="console"] .mc-rail a.item {
+  color: var(--nl-mint);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 7px 10px;
+  border-radius: 5px;
+}
+[data-surface="console"] .mc-rail a.item:hover,
+[data-surface="console"] .mc-rail a.item[aria-current="page"] {
+  background: var(--nl-green);
+  color: var(--on-dark);
+  font-weight: 600;
+}
+[data-surface="console"] .mc-rail .foot {
+  margin-top: auto;
+  font-size: 11.5px;
+  color: var(--nl-mint);
+  padding: 0 10px;
+}
+
+[data-surface="console"] .mc-main {
+  padding: 26px 32px 60px;
+  max-width: 1180px;
+}
+[data-surface="console"] h1 {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin: 0 0 4px;
+  color: var(--nl-ink);
+}
+[data-surface="console"] h2 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--nl-ink);
+}
+[data-surface="console"] .mc-sub {
+  color: var(--nl-ink);
+  opacity: 0.75;
+  font-size: 13px;
+  margin: 0 0 20px;
+  max-width: 74ch;
+}
+
+[data-surface="console"] .mc-panel {
+  background: var(--nl-mint);
+  border: 1px solid var(--nl-ink);
+  border-radius: 6px;
+  padding: 16px;
+}
+[data-surface="console"] .mc-panel + .mc-panel {
+  margin-top: 12px;
+}
+
+[data-surface="console"] .mc-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+
+[data-surface="console"] .mc-stat {
+  background: var(--nl-mint);
+  border: 1px solid var(--nl-ink);
+  border-left: 4px solid var(--nl-green);
+  border-radius: 6px;
+  padding: 13px 15px;
+}
+[data-surface="console"] .mc-stat .v {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  color: var(--nl-ink);
+}
+[data-surface="console"] .mc-stat .k {
+  font-size: 11.5px;
+  color: var(--nl-ink);
+  opacity: 0.75;
+  margin-top: 2px;
+}
+
+/* Table headers are ink so a dense grid still has a spine. */
+[data-surface="console"] table.mc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+[data-surface="console"] table.mc-table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--nl-mint);
+  font-weight: 700;
+  padding: 9px 12px;
+  background: var(--nl-ink);
+}
+[data-surface="console"] table.mc-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--nl-ink);
+  color: var(--nl-ink);
+}
+[data-surface="console"] table.mc-table tr:hover td {
+  background: var(--nl-amber);
+}
+[data-surface="console"] table.mc-table td.num,
+[data-surface="console"] table.mc-table th.num {
+  text-align: right;
+}
+
+[data-surface="console"] .mc-btn {
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 5px;
+  border: 1px solid var(--nl-green);
+  background: var(--nl-green);
+  color: var(--on-dark);
+  cursor: pointer;
+}
+[data-surface="console"] .mc-btn:hover {
+  background: var(--nl-ink);
+  border-color: var(--nl-ink);
+}
+[data-surface="console"] .mc-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+[data-surface="console"] .mc-btn--quiet {
+  background: var(--nl-mint);
+  color: var(--nl-ink);
+  border-color: var(--nl-ink);
+}
+[data-surface="console"] .mc-btn--quiet:hover {
+  background: var(--nl-amber);
+  border-color: var(--nl-ink);
+  color: var(--nl-ink);
+}
+
+[data-surface="console"] .mc-input {
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 8px;
+  border: 1px solid var(--nl-ink);
+  border-radius: 5px;
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+  background: var(--nl-mint);
+  color: var(--nl-ink);
+}
+[data-surface="console"] .mc-input::placeholder {
+  color: var(--on-light);
+  opacity: 0.55;
+}
+[data-surface="console"] .mc-input:focus {
+  outline: 2px solid var(--nl-green);
+  border-color: var(--nl-green);
+}
+
+/* Meter track is ink; the bar reports health in green, amber, rust. */
+[data-surface="console"] .mc-meter {
+  height: 6px;
+  background: var(--nl-ink);
+  border-radius: 999px;
+  overflow: hidden;
+}
+[data-surface="console"] .mc-meter > i {
+  display: block;
+  height: 100%;
+  background: var(--nl-green);
+}
+[data-surface="console"] .mc-meter[data-tone="low"] > i {
+  background: var(--nl-amber);
+}
+[data-surface="console"] .mc-meter[data-blocked="true"] > i,
+[data-surface="console"] .mc-meter[data-tone="spent"] > i {
+  background: var(--nl-rust);
+}
+
+/* Pills are solid: state is legible at a glance, not a pastel hint. */
+[data-surface="console"] .mc-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--nl-ink);
+  color: var(--nl-mint);
+  border: 1px solid var(--nl-ink);
+}
+[data-surface="console"] .mc-pill[data-tone="live"] {
+  background: var(--nl-green);
+  border-color: var(--nl-green);
+  color: var(--on-dark);
+}
+[data-surface="console"] .mc-pill[data-tone="paused"] {
+  background: var(--nl-amber);
+  border-color: var(--nl-amber);
+  color: var(--nl-ink);
+}
+[data-surface="console"] .mc-pill[data-tone="blocked"] {
+  background: var(--nl-rust);
+  border-color: var(--nl-rust);
+  color: var(--on-dark);
+}
+
+[data-surface="console"] .mc-banner {
+  background: var(--nl-green);
+  border: 1px solid var(--nl-green);
+  color: var(--on-dark);
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+[data-surface="console"] .mc-empty {
+  border: 2px dashed var(--nl-ink);
+  border-radius: 6px;
+  padding: 30px;
+  text-align: center;
+  color: var(--nl-ink);
+  background: var(--nl-mint);
+}
+
+[data-surface="console"] details.mc-row {
+  border: 1px solid var(--nl-ink);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--nl-mint);
+}
+[data-surface="console"] details.mc-row + details.mc-row {
+  margin-top: 6px;
+}
+[data-surface="console"] details.mc-row summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--nl-ink);
+}
+
+[data-surface="console"] a {
+  color: var(--nl-ink);
+}
+[data-surface="console"] .mc-rail a {
+  text-decoration: none;
+}
+
+/* ================================== shared ============================== */
+
+.nl-money {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Logout reads as an action on every surface. */
+.nl-logout {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid var(--nl-amber);
+  background: var(--nl-amber);
+  color: var(--nl-ink);
+  border-radius: 7px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.nl-logout:hover {
+  background: var(--nl-mint);
+  border-color: var(--nl-mint);
+}
+
+/* ==========================================================================
+   BUTTON HOVER LOCK
+
+   Buttons were disappearing under the cursor. Two causes, both here:
+
+     .nl-btn:hover        used var(--nl-green-deep), which is not defined
+                          anywhere. An invalid var() drops the declaration, so
+                          background fell back to transparent — a green button
+                          became an invisible one on hover.
+     .nl-btn--ghost:hover used var(--sand), which resolves to --nl-mint, the
+                          page background — mint on mint, also invisible.
+
+   This block is last in the last stylesheet, so it wins. Every state below
+   names one of the five palette hexes literally: no var() that can go missing,
+   no tint, and a text colour paired with the fill on purpose. Hover, focus and
+   active are styled together, because a keyboard user has the same right to
+   see the control they are on.
+   ========================================================================== */
+
+.nl-btn,
+[data-surface="store"] .st-btn,
+[data-surface="console"] .mc-btn {
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+/* Primary: green fill, white text -> ink fill, mint text. Both are legible. */
+.nl-btn:hover,
+.nl-btn:focus-visible,
+.nl-btn:active,
+[data-surface="store"] .st-btn:hover,
+[data-surface="store"] .st-btn:focus-visible,
+[data-surface="store"] .st-btn:active,
+[data-surface="console"] .mc-btn:hover,
+[data-surface="console"] .mc-btn:focus-visible,
+[data-surface="console"] .mc-btn:active {
+  background: var(--nl-ink);
+  border-color: var(--nl-ink);
+  color: var(--nl-mint);
+}
+
+/* Secondary/ghost: mint fill on a mint page, so it needs a different fill on
+   hover or it vanishes. Amber with ink text is the one pairing that stays
+   readable on both the store and the console. */
+.nl-btn--ghost:hover,
+.nl-btn--ghost:focus-visible,
+.nl-btn--ghost:active,
+[data-surface="store"] .st-btn--quiet:hover,
+[data-surface="store"] .st-btn--quiet:focus-visible,
+[data-surface="store"] .st-btn--quiet:active,
+[data-surface="console"] .mc-btn--quiet:hover,
+[data-surface="console"] .mc-btn--quiet:focus-visible,
+[data-surface="console"] .mc-btn--quiet:active {
+  background: var(--nl-amber);
+  border-color: var(--nl-ink);
+  color: var(--nl-ink);
+}
+
+/* A disabled button must not look clickable, but must still be readable. */
+.nl-btn:disabled,
+.nl-btn:disabled:hover,
+[data-surface="store"] .st-btn:disabled,
+[data-surface="store"] .st-btn:disabled:hover,
+[data-surface="console"] .mc-btn:disabled,
+[data-surface="console"] .mc-btn:disabled:hover {
+  background: var(--nl-green);
+  border-color: var(--nl-green);
+  color: var(--on-dark);
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* Keyboard focus is visible on every surface, including the dark stage. */
+.nl-btn:focus-visible,
+[data-surface="store"] .st-btn:focus-visible,
+[data-surface="store"] .st-btn--quiet:focus-visible,
+[data-surface="console"] .mc-btn:focus-visible,
+[data-surface="console"] .mc-btn--quiet:focus-visible,
+[data-surface="stage"] .sg-door:focus-visible {
+  outline: 3px solid var(--nl-amber);
+  outline-offset: 2px;
+}
+
+/* Featured tile on the store home. Was an inline style; moved here so the
+   image element could become the shared ProductImage component. */
+[data-surface="store"] .st-tile {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 12px;
+  background: var(--nl-mint);
+  display: block;
+}
+
+/* ============================ EVIDENCE TREE ==============================
+   The shopper-facing explanation of a purchase. A vertical spine with one
+   dot per beat: asked, found, suggested, decided, priced, issued. Tones come
+   from the five hexes only — green for things that worked, amber for a hint,
+   rust for a stop, ink for the shopper's own words.
+   ======================================================================== */
+
+.ev { margin-top: var(--space-2); }
+.ev-h {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--nl-ink); opacity: 0.72; margin: 0 0 10px;
+}
+.ev-list { list-style: none; margin: 0 0 12px; padding: 0; position: relative; }
+.ev-list::before {
+  content: ""; position: absolute; left: 6px; top: 8px; bottom: 8px;
+  width: 2px; background: var(--nl-ink); opacity: 0.16;
+}
+.ev-step { position: relative; padding: 0 0 14px 26px; }
+.ev-step:last-child { padding-bottom: 0; }
+.ev-dot {
+  position: absolute; left: 0; top: 4px; width: 14px; height: 14px;
+  border-radius: 50%; background: var(--nl-mint); border: 3px solid var(--nl-ink);
+}
+.ev-step[data-tone="ok"]     .ev-dot { border-color: var(--nl-green); }
+.ev-step[data-tone="hint"]   .ev-dot { border-color: var(--nl-amber); }
+.ev-step[data-tone="stop"]   .ev-dot { border-color: var(--nl-rust); }
+.ev-step[data-tone="policy"] .ev-dot { background: var(--nl-green); border-color: var(--nl-ink); }
+.ev-step[data-tone="you"]    .ev-dot { background: var(--nl-ink); border-color: var(--nl-ink); }
+
+.ev-title { font-size: 15px; font-weight: 650; color: var(--nl-ink); }
+.ev-tag {
+  margin-left: 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  padding: 2px 7px; border-radius: 4px;
+  background: var(--nl-ink); color: var(--nl-mint); vertical-align: 2px;
+}
+.ev-detail { margin: 2px 0 0; font-size: 14px; line-height: 1.5; color: var(--nl-ink); opacity: 0.85; }
+.ev-note {
+  margin: 5px 0 0; font-size: 13px; line-height: 1.5;
+  color: var(--nl-ink); opacity: 0.7;
+}
+.ev-link { display: inline-block; margin-top: 6px; font-size: 13px; color: var(--nl-rust); }
+.ev-raw {
+  margin-top: 10px; font-size: 11px; line-height: 1.5; max-height: 320px; overflow: auto;
+  background: var(--nl-mint); border: 1px solid var(--nl-ink); border-radius: 8px; padding: 10px;
+}
+
+/* Cart link with its count. The badge is green on the mint nav, which is the
+   one pairing that stays readable at this size. */
+[data-surface="store"] .st-cart { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+[data-surface="store"] .st-cart-badge {
+  min-width: 19px; height: 19px; padding: 0 5px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; background: var(--nl-green); color: var(--on-dark);
+  font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
+
+/* Orchestrator: the "what to add" list. One row per real SKU. */
+[data-surface="console"] .mc-adds { list-style: none; margin: 0; padding: 0; }
+[data-surface="console"] .mc-add {
+  padding: 12px 0; border-bottom: 1px solid var(--nl-ink);
+}
+[data-surface="console"] .mc-add:last-child { border-bottom: none; padding-bottom: 0; }
+[data-surface="console"] .mc-add-main { font-size: 14.5px; line-height: 1.5; }
+[data-surface="console"] .mc-add-meta {
+  margin-top: 3px; font-size: 12.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The six beats on Connect AI — the same story the shop's agent tells. */
+[data-surface="store"] .st-beats { margin: 0 0 12px; padding-left: 20px; }
+[data-surface="store"] .st-beats li { margin-bottom: 8px; font-size: 15px; line-height: 1.55; }
+
+/* Upsell thumbnail. Sized here so the shared ProductImage stays presentational. */
+.nl-upsell-thumb {
+  width: 84px; height: 105px; object-fit: cover;
+  border-radius: var(--radius); display: block; flex: none;
+}
+
+/* Upsell thumbnail. Sized here so the shared ProductImage stays presentational. */
+.nl-upsell-thumb {
+  width: 84px; height: 105px; object-fit: cover;
+  border-radius: var(--radius); display: block; flex: none;
+}
+
+/* Paid / Unpaid tabs on the customer orders page. */
+[data-surface="store"] .st-tabs {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--nl-ink);
+}
+[data-surface="store"] .st-tab {
+  font-size: 14.5px; font-weight: 600; padding: 7px 14px; border-radius: 999px;
+  text-decoration: none; color: var(--nl-ink);
+  border: 1px solid var(--nl-ink); background: var(--nl-mint);
+}
+[data-surface="store"] .st-tab:hover { background: var(--nl-amber); color: var(--nl-ink); }
+[data-surface="store"] .st-tab.is-on {
+  background: var(--nl-green); border-color: var(--nl-green); color: var(--on-dark);
+}
+[data-surface="store"] .st-tab.is-on:hover { background: var(--nl-ink); border-color: var(--nl-ink); color: var(--nl-mint); }
+
+/* ========================= MERCHANT LEDGER (audit) =======================
+   A readable table, an expander that answers "why" in a sentence, and a
+   paper layout — because the moment this page matters is a dispute, and a
+   dispute needs ink, a decision id and the hashes.
+   ======================================================================== */
+
+[data-surface="console"] .mc-actions {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+}
+[data-surface="console"] .mc-chain {
+  font-weight: 700; color: var(--on-dark);
+  background: var(--nl-green); border-color: var(--nl-green);
+}
+[data-surface="console"] .mc-chain[data-ok="no"] {
+  background: var(--nl-rust); border-color: var(--nl-rust);
+}
+[data-surface="console"] .mc-tiny { color: var(--muted); font-size: 11.5px; }
+[data-surface="console"] .mc-ledger td { vertical-align: top; }
+
+/* The overview's single decision table. Same bones as the ledger, but the
+   "why" column carries a sentence, so rows need room to breathe. */
+[data-surface="console"] .mc-decisions td { vertical-align: top; }
+[data-surface="console"] .mc-decisions td:nth-child(6) {
+  font-size: 13px; line-height: 1.5; color: var(--nl-ink);
+}
+[data-surface="console"] .mc-ledger-row { cursor: pointer; }
+[data-surface="console"] .mc-ledger-row:hover td { background: var(--nl-mint); }
+
+/* The "why" row is always in the DOM so printing includes it; on screen it
+   only appears once the merchant opens that row. */
+[data-surface="console"] .mc-why-row[data-open="no"] { display: none; }
+[data-surface="console"] .mc-why-row td {
+  border-top: none; padding-top: 0; padding-bottom: 14px;
+}
+[data-surface="console"] .mc-why { margin: 0 0 6px; font-size: 14px; line-height: 1.55; max-width: 92ch; }
+[data-surface="console"] .mc-ids { margin: 0; word-break: break-all; }
+
+.print-only { display: none; }
+
+@media print {
+  /* Paper: no rails, no buttons, no colour blocks — just the table, black on
+     white, with every "why" expanded and the hashes present. */
+  .no-print, [data-surface="console"] .mc-rail, [data-surface="console"] .mc-actions { display: none !important; }
+  .print-only { display: block; }
+
+  [data-surface="console"] { background: #ffffff !important; color: #000000 !important; }
+  [data-surface="console"] .mc-shell, [data-surface="console"] .mc-main { margin: 0 !important; padding: 0 !important; }
+  [data-surface="console"] .mc-panel { border: none !important; background: none !important; padding: 0 !important; }
+  [data-surface="console"] .mc-chain { color: #000 !important; background: none !important; border: 1px solid #000 !important; padding: 6px 8px !important; }
+  [data-surface="console"] .mc-printhead { margin-bottom: 10px; font-size: 11pt; }
+
+  [data-surface="console"] .mc-why-row[data-open="no"] { display: table-row !important; }
+  [data-surface="console"] .mc-ledger { width: 100%; font-size: 9pt; border-collapse: collapse; }
+  [data-surface="console"] .mc-ledger th,
+  [data-surface="console"] .mc-ledger td {
+    border-bottom: 1px solid #999 !important; background: none !important; color: #000 !important;
+    padding: 4px 6px !important;
+  }
+  [data-surface="console"] .mc-pill {
+    border: 1px solid #000 !important; background: none !important; color: #000 !important;
+    padding: 0 4px !important;
+  }
+  [data-surface="console"] .mc-tiny { color: #333 !important; }
+  /* Never split a decision across two sheets. */
+  [data-surface="console"] .mc-ledger-row, [data-surface="console"] .mc-why-row { break-inside: avoid; }
+  @page { margin: 14mm; }
+}
+
+/* Margin-floor control. The slider is the merchant's one lever on how far up
+   the coupon ladder a basket can reach, so it gets room. */
+[data-surface="console"] .mc-floor {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+[data-surface="console"] .mc-floor input[type="range"] {
+  flex: 1; min-width: 220px; accent-color: var(--nl-green);
+}
+[data-surface="console"] .mc-floor-value {
+  min-width: 62px; font-size: 20px; font-weight: 700;
+  font-variant-numeric: tabular-nums; color: var(--nl-ink);
+}
+
+/* The floor's worked examples: help text, dismissible for good. */
+[data-surface="console"] .mc-examples { margin-top: 4px; }
+[data-surface="console"] .mc-examples-x {
+  flex: none;
+  width: 26px; height: 26px; line-height: 1; font-size: 19px;
+  border: 1px solid var(--nl-ink); border-radius: 6px;
+  background: var(--nl-mint); color: var(--nl-ink); cursor: pointer;
+}
+[data-surface="console"] .mc-examples-x:hover {
+  background: var(--nl-amber); border-color: var(--nl-ink);
+}
+[data-surface="console"] .mc-linkbtn {
+  font: inherit; font-size: 13px; padding: 0; border: none; background: none;
+  color: var(--nl-green); text-decoration: underline; cursor: pointer;
+}
+[data-surface="console"] .mc-linkbtn:hover { color: var(--nl-ink); }
+
+/* Stage: the one link out to the protocol page. */
+[data-surface="stage"] .sg-protocols {
+  display: inline-block;
+  color: var(--nl-mint);
+  border: 1px solid var(--nl-green);
+  border-radius: 8px;
+  padding: 7px 15px;
+  font-size: 13px;
+  text-decoration: none;
+}
+[data-surface="stage"] .sg-protocols:hover {
+  background: var(--nl-green);
+  color: var(--on-dark);
+}
+
+/* Examples card: the close control sits in the card's own padding, above the
+   table, so it can never land on a column header. */
+[data-surface="console"] .mc-examples-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin: 12px 0 2px;
+}
+
+/* ============================== BASKET =================================== */
+[data-surface="store"] .ct-wrap {
+  display: grid; gap: 18px; grid-template-columns: 1fr 320px; align-items: start;
+}
+@media (max-width: 820px) {
+  [data-surface="store"] .ct-wrap { grid-template-columns: 1fr; }
+}
+[data-surface="store"] .ct-line {
+  display: flex; align-items: center; gap: 16px; padding: 16px 18px; flex-wrap: wrap;
+}
+[data-surface="store"] .ct-line > div:first-child { flex: 1; min-width: 160px; }
+[data-surface="store"] .ct-qty {
+  display: flex; align-items: center; gap: 2px;
+  border: 1px solid var(--nl-ink); border-radius: 8px; overflow: hidden;
+}
+[data-surface="store"] .ct-step {
+  font: inherit; font-size: 17px; line-height: 1; width: 32px; height: 32px;
+  border: none; background: var(--nl-mint); color: var(--nl-ink); cursor: pointer;
+}
+[data-surface="store"] .ct-step:hover { background: var(--nl-amber); }
+[data-surface="store"] .ct-step:disabled { opacity: 0.5; cursor: default; }
+[data-surface="store"] .ct-count {
+  min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; font-weight: 650;
+}
+[data-surface="store"] .ct-remove {
+  font: inherit; font-size: 13px; padding: 0; border: none; background: none;
+  color: var(--nl-rust); text-decoration: underline; cursor: pointer;
+}
+[data-surface="store"] .ct-pay { position: sticky; top: 18px; }
+[data-surface="store"] .ct-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  gap: 12px; padding: 7px 0; font-size: 15px;
+}
+[data-surface="store"] .ct-total {
+  border-top: 1px solid var(--nl-ink); margin-top: 6px; padding-top: 12px; font-size: 18px;
+}
+
+/* Console forms: create campaign, add product. */
+[data-surface="console"] .mc-form {
+  display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  margin-bottom: 12px;
+}
+[data-surface="console"] .mc-form label { display: flex; flex-direction: column; gap: 5px; }
+[data-surface="console"] .mc-form label > span { font-size: 12.5px; color: var(--muted); }
+[data-surface="console"] .mc-form-wide { grid-column: 1 / -1; }
+[data-surface="console"] select.mc-input[multiple] { min-height: 130px; }
+
+/* A gift line: in the bag, shipped, never charged for. */
+[data-surface="store"] .ct-gift {
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 5px 11px; border-radius: 999px;
+  background: var(--nl-green); color: var(--on-dark);
+}

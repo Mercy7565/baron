@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" width="900" height="900" role="img" aria-label="White tube of invisible sunscreen SPF 50">
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fdf4e6"/>
+      <stop offset="100%" stop-color="#f2dfc2"/>
+    </linearGradient>
+    <linearGradient id="tube" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d9e6dd"/>
+      <stop offset="18%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#f7fbf8"/>
+      <stop offset="82%" stop-color="#dfe9e2"/>
+      <stop offset="100%" stop-color="#c2d2c8"/>
+    </linearGradient>
+    <linearGradient id="cap2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c97a26"/>
+      <stop offset="30%" stop-color="#e8923a"/>
+      <stop offset="70%" stop-color="#d5811f"/>
+      <stop offset="100%" stop-color="#a55f16"/>
+    </linearGradient>
+    <radialGradient id="shadow2" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#8a3a1c" stop-opacity="0.26"/>
+      <stop offset="100%" stop-color="#8a3a1c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="900" height="900" fill="url(#bg2)"/>
+  <!-- sun -->
+  <circle cx="690" cy="212" r="74" fill="#e8923a" opacity="0.28"/>
+  <circle cx="690" cy="212" r="46" fill="#e8923a" opacity="0.42"/>
+  <ellipse cx="450" cy="756" rx="188" ry="30" fill="url(#shadow2)"/>
+
+  <!-- cap -->
+  <rect x="392" y="146" width="116" height="86" rx="12" fill="url(#cap2)"/>
+  <rect x="392" y="146" width="30" height="86" rx="12" fill="#ffffff" opacity="0.24"/>
+  <rect x="408" y="228" width="84" height="20" rx="8" fill="#b96c1c"/>
+
+  <!-- tube body: rounded shoulders, flat crimped base -->
+  <path d="M352 300 q0 -52 46 -52 h104 q46 0 46 52 v396 h-196 z" fill="url(#tube)"/>
+  <rect x="344" y="694" width="212" height="34" rx="10" fill="#cfdcd4"/>
+  <rect x="344" y="694" width="212" height="34" rx="10" fill="#24352c" opacity="0.10"/>
+  <!-- crimp ridges -->
+  <g stroke="#a9bcb1" stroke-width="3" opacity="0.75">
+    <line x1="368" y1="700" x2="368" y2="722"/>
+    <line x1="398" y1="700" x2="398" y2="722"/>
+    <line x1="428" y1="700" x2="428" y2="722"/>
+    <line x1="458" y1="700" x2="458" y2="722"/>
+    <line x1="488" y1="700" x2="488" y2="722"/>
+    <line x1="518" y1="700" x2="518" y2="722"/>
+  </g>
+  <rect x="374" y="286" width="22" height="392" rx="11" fill="#ffffff" opacity="0.55"/>
+
+  <!-- label -->
+  <rect x="352" y="392" width="196" height="212" fill="#2f8f6b"/>
+  <text x="450" y="446" font-family="Inter, Helvetica, Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="1" fill="#ffffff" text-anchor="middle">INVISIBLE</text>
+  <text x="450" y="478" font-family="Inter, Helvetica, Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="1" fill="#ffffff" text-anchor="middle">SUNSCREEN</text>
+  <text x="450" y="546" font-family="Inter, Helvetica, Arial, sans-serif" font-size="62" font-weight="700" fill="#ffffff" text-anchor="middle">SPF 50</text>
+  <text x="450" y="582" font-family="Inter, Helvetica, Arial, sans-serif" font-size="24" letter-spacing="3" fill="#c5e1d4" text-anchor="middle">PA++++</text>
+  <text x="450" y="648" font-family="Inter, Helvetica, Arial, sans-serif" font-size="20" fill="#4a5c51" text-anchor="middle">50 ml</text>
+</svg>

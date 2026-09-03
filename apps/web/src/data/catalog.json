@@ -1,0 +1,502 @@
+{
+  "vertical": "d2c_skincare",
+  "currency": "INR",
+  "catalog_version": "2026-08-31",
+  "products": [
+    {
+      "id": "sku_cleanser_gel_100",
+      "title": "Gentle Foaming Cleanser 100ml",
+      "description": "Low-pH gel cleanser for daily use. Fragrance-free, suits combination skin.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "cleanser"
+      ],
+      "url": "/p/sku_cleanser_gel_100",
+      "price_paise": 39900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 140,
+      "max_qty": 4,
+      "margin_bps": 3800,
+      "attributes": {
+        "size": "100ml",
+        "format": "gel",
+        "scent": "unscented"
+      },
+      "complements": [
+        "sku_moist_light_50",
+        "sku_toner_pha_150"
+      ],
+      "upgrades": [
+        "sku_cleanser_gel_200"
+      ],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_moist_light_50",
+        "sku_toner_pha_150",
+        "sku_cleanser_gel_200",
+        "sku_serum_niacin_30"
+      ]
+    },
+    {
+      "id": "sku_cleanser_gel_200",
+      "title": "Gentle Foaming Cleanser 200ml",
+      "description": "The 100ml cleanser in a larger pump bottle. Better unit economics per wash.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "cleanser"
+      ],
+      "url": "/p/sku_cleanser_gel_200",
+      "price_paise": 64900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 80,
+      "max_qty": 3,
+      "margin_bps": 4200,
+      "attributes": {
+        "size": "200ml",
+        "format": "gel",
+        "scent": "unscented"
+      },
+      "complements": [
+        "sku_moist_light_50",
+        "sku_spf_fluid_50"
+      ],
+      "upgrades": [],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_moist_light_50",
+        "sku_spf_fluid_50",
+        "sku_cleanser_gel_100",
+        "sku_serum_niacin_30"
+      ]
+    },
+    {
+      "id": "sku_serum_niacin_30",
+      "title": "Niacinamide 5% Serum 30ml",
+      "description": "Daily serum for uneven tone and visible pores. Layers under moisturiser.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "serum"
+      ],
+      "url": "/p/sku_serum_niacin_30",
+      "price_paise": 84900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 62,
+      "max_qty": 3,
+      "margin_bps": 5200,
+      "attributes": {
+        "size": "30ml",
+        "active": "niacinamide",
+        "strength": "5%"
+      },
+      "complements": [
+        "sku_moist_light_50",
+        "sku_spf_fluid_50"
+      ],
+      "upgrades": [
+        "sku_serum_vitc_30"
+      ],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_moist_light_50",
+        "sku_spf_fluid_50",
+        "sku_serum_vitc_30",
+        "sku_cleanser_gel_100"
+      ]
+    },
+    {
+      "id": "sku_serum_vitc_30",
+      "title": "Vitamin C 15% Serum 30ml",
+      "description": "Morning antioxidant serum. Higher active load than the niacinamide serum.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "serum"
+      ],
+      "url": "/p/sku_serum_vitc_30",
+      "price_paise": 129900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 34,
+      "max_qty": 2,
+      "margin_bps": 5600,
+      "attributes": {
+        "size": "30ml",
+        "active": "ascorbic acid",
+        "strength": "15%"
+      },
+      "complements": [
+        "sku_spf_fluid_50",
+        "sku_moist_rich_50"
+      ],
+      "upgrades": [],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_spf_fluid_50",
+        "sku_moist_rich_50",
+        "sku_cleanser_gel_100",
+        "sku_cleanser_gel_200"
+      ]
+    },
+    {
+      "id": "sku_moist_light_50",
+      "title": "Lightweight Moisturiser 50ml",
+      "description": "Oil-free gel-cream for humid weather. Non-comedogenic.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "moisturiser"
+      ],
+      "url": "/p/sku_moist_light_50",
+      "price_paise": 59900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 110,
+      "max_qty": 4,
+      "margin_bps": 4400,
+      "attributes": {
+        "size": "50ml",
+        "finish": "matte",
+        "shade": "clear"
+      },
+      "complements": [
+        "sku_cleanser_gel_100",
+        "sku_spf_fluid_50"
+      ],
+      "upgrades": [
+        "sku_moist_rich_50"
+      ],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_cleanser_gel_100",
+        "sku_spf_fluid_50",
+        "sku_moist_rich_50",
+        "sku_cleanser_gel_200"
+      ]
+    },
+    {
+      "id": "sku_moist_rich_50",
+      "title": "Rich Repair Moisturiser 50ml",
+      "description": "Ceramide barrier cream for dry or compromised skin. Night-weight.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "moisturiser"
+      ],
+      "url": "/p/sku_moist_rich_50",
+      "price_paise": 94900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 47,
+      "max_qty": 3,
+      "margin_bps": 5000,
+      "attributes": {
+        "size": "50ml",
+        "finish": "dewy",
+        "shade": "clear"
+      },
+      "complements": [
+        "sku_serum_niacin_30",
+        "sku_cleanser_gel_100"
+      ],
+      "upgrades": [],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_serum_niacin_30",
+        "sku_cleanser_gel_100",
+        "sku_cleanser_gel_200",
+        "sku_serum_vitc_30"
+      ]
+    },
+    {
+      "id": "sku_spf_fluid_50",
+      "title": "Invisible Sunscreen SPF 50 PA++++ 50ml",
+      "description": "No-white-cast daily fluid. The single highest-retention product in the range.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "sunscreen"
+      ],
+      "url": "/p/sku_spf_fluid_50",
+      "price_paise": 74900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 96,
+      "max_qty": 5,
+      "margin_bps": 4600,
+      "attributes": {
+        "size": "50ml",
+        "spf": "50",
+        "finish": "invisible"
+      },
+      "complements": [
+        "sku_moist_light_50",
+        "sku_cleanser_gel_100"
+      ],
+      "upgrades": [],
+      "blocked": false,
+      "image": "/products/sunscreen-spf50.svg",
+      "frequently_bought_with": [
+        "sku_moist_light_50",
+        "sku_cleanser_gel_100",
+        "sku_cleanser_gel_200",
+        "sku_serum_niacin_30"
+      ]
+    },
+    {
+      "id": "sku_toner_pha_150",
+      "title": "PHA Clarifying Toner 150ml",
+      "description": "Gentle weekly exfoliant. Milder than the AHA peel for sensitive skin.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "toner",
+        "exfoliant"
+      ],
+      "url": "/p/sku_toner_pha_150",
+      "price_paise": 54900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 73,
+      "max_qty": 3,
+      "margin_bps": 4100,
+      "attributes": {
+        "size": "150ml",
+        "active": "gluconolactone",
+        "strength": "4%"
+      },
+      "complements": [
+        "sku_moist_light_50"
+      ],
+      "upgrades": [
+        "sku_peel_aha_30"
+      ],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_moist_light_50",
+        "sku_peel_aha_30",
+        "sku_cleanser_gel_100",
+        "sku_cleanser_gel_200"
+      ]
+    },
+    {
+      "id": "sku_peel_aha_30",
+      "title": "AHA 10% Overnight Peel 30ml",
+      "description": "Weekly resurfacing treatment. Not for use alongside the retinoid.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "exfoliant",
+        "treatment"
+      ],
+      "url": "/p/sku_peel_aha_30",
+      "price_paise": 99900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 21,
+      "max_qty": 2,
+      "margin_bps": 5400,
+      "attributes": {
+        "size": "30ml",
+        "active": "glycolic acid",
+        "strength": "10%"
+      },
+      "complements": [
+        "sku_moist_rich_50"
+      ],
+      "upgrades": [],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1598662957563-ee4965d4d72c?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_moist_rich_50",
+        "sku_cleanser_gel_100",
+        "sku_cleanser_gel_200",
+        "sku_serum_niacin_30"
+      ]
+    },
+    {
+      "id": "sku_eye_peptide_15",
+      "title": "Peptide Eye Cream 15ml",
+      "description": "Fragrance-free eye cream. Small format, high margin.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "eye"
+      ],
+      "url": "/p/sku_eye_peptide_15",
+      "price_paise": 89900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 58,
+      "max_qty": 3,
+      "margin_bps": 5800,
+      "attributes": {
+        "size": "15ml",
+        "active": "peptides",
+        "scent": "unscented"
+      },
+      "complements": [
+        "sku_moist_rich_50",
+        "sku_serum_niacin_30"
+      ],
+      "upgrades": [],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1567721913486-6585f069b332?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_moist_rich_50",
+        "sku_serum_niacin_30",
+        "sku_cleanser_gel_100",
+        "sku_cleanser_gel_200"
+      ]
+    },
+    {
+      "id": "sku_mask_clay_75",
+      "title": "Kaolin Clay Mask 75ml",
+      "description": "Weekly clay mask for oily zones. Currently out of stock.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "mask"
+      ],
+      "url": "/p/sku_mask_clay_75",
+      "price_paise": 49900,
+      "currency": "INR",
+      "availability": "oos",
+      "stock_qty": 0,
+      "max_qty": 3,
+      "margin_bps": 4000,
+      "attributes": {
+        "size": "75ml",
+        "active": "kaolin",
+        "scent": "unscented"
+      },
+      "complements": [
+        "sku_toner_pha_150"
+      ],
+      "upgrades": [],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1596755389378-c31d21fd1273?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_toner_pha_150",
+        "sku_cleanser_gel_100",
+        "sku_cleanser_gel_200",
+        "sku_serum_niacin_30"
+      ]
+    },
+    {
+      "id": "sku_lipbalm_spf_10",
+      "title": "Lip Balm SPF 30 10ml",
+      "description": "Small add-on item. Useful for testing low-value cart maths.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "lip"
+      ],
+      "url": "/p/sku_lipbalm_spf_10",
+      "price_paise": 24900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 210,
+      "max_qty": 6,
+      "margin_bps": 3200,
+      "attributes": {
+        "size": "10ml",
+        "spf": "30",
+        "shade": "clear"
+      },
+      "complements": [
+        "sku_spf_fluid_50"
+      ],
+      "upgrades": [],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_spf_fluid_50",
+        "sku_cleanser_gel_100",
+        "sku_cleanser_gel_200",
+        "sku_serum_niacin_30"
+      ]
+    },
+    {
+      "id": "sku_retinoid_03",
+      "title": "Retinoid 0.3% Night Serum 30ml",
+      "description": "Restricted item. Not sellable through the agent channel in this policy version.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "treatment",
+        "restricted"
+      ],
+      "url": "/p/sku_retinoid_03",
+      "price_paise": 139900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 30,
+      "max_qty": 1,
+      "margin_bps": 6000,
+      "attributes": {
+        "size": "30ml",
+        "active": "retinoid",
+        "strength": "0.3%"
+      },
+      "complements": [
+        "sku_moist_rich_50"
+      ],
+      "upgrades": [],
+      "blocked": true,
+      "image": "/products/retinoid-serum.svg",
+      "frequently_bought_with": [
+        "sku_moist_rich_50",
+        "sku_cleanser_gel_100",
+        "sku_cleanser_gel_200",
+        "sku_serum_niacin_30"
+      ]
+    },
+    {
+      "id": "sku_kit_starter",
+      "title": "Starter Routine Kit",
+      "description": "Cleanser, lightweight moisturiser and sunscreen bundled. The natural upgrade path.",
+      "brand": "Baron",
+      "category": [
+        "skincare",
+        "kit"
+      ],
+      "url": "/p/sku_kit_starter",
+      "price_paise": 159900,
+      "currency": "INR",
+      "availability": "in_stock",
+      "stock_qty": 25,
+      "max_qty": 2,
+      "margin_bps": 4800,
+      "attributes": {
+        "size": "3-piece",
+        "format": "kit",
+        "shade": "n/a"
+      },
+      "complements": [
+        "sku_eye_peptide_15"
+      ],
+      "upgrades": [],
+      "blocked": false,
+      "image": "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=900&q=80",
+      "frequently_bought_with": [
+        "sku_eye_peptide_15",
+        "sku_cleanser_gel_100",
+        "sku_cleanser_gel_200",
+        "sku_serum_niacin_30"
+      ]
+    }
+  ]
+}

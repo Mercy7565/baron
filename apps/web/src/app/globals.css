@@ -1,0 +1,321 @@
+/*
+ * Design tokens. Every colour, radius and space in the app resolves to one of
+ * these — a later theme pass changes this block and nothing else.
+ */
+:root {
+  --bg: var(--nl-mint);
+  --fg: var(--nl-ink);
+  --muted: var(--nl-ink);
+  --accent: var(--nl-green);
+  --danger: var(--nl-rust);
+  --ok: var(--nl-green);
+  --warn: var(--nl-amber);
+  --surface: var(--nl-mint);
+  --border: var(--nl-ink);
+
+  --radius: 6px;
+  --space: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  line-height: 1.5;
+}
+
+a { color: var(--accent); }
+
+main { padding: var(--space-2); max-width: 1100px; margin: 0 auto; }
+
+h1, h2, h3 { line-height: 1.25; margin: 0 0 var(--space) 0; }
+
+code, pre, .mono { font-family: var(--font-mono); }
+
+pre {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---- primitives, used by the components in src/components ---- */
+
+.cs-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space);
+  padding: var(--space) var(--space-2);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.cs-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-2);
+  background: var(--bg);
+}
+
+.cs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-2);
+}
+
+.cs-row { display: flex; gap: var(--space); align-items: center; }
+.cs-stack { display: flex; flex-direction: column; gap: var(--space); }
+
+.cs-muted { color: var(--muted); }
+.cs-ok { color: var(--ok); }
+.cs-danger { color: var(--danger); }
+.cs-warn { color: var(--warn); }
+
+.cs-badge {
+  display: inline-block;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2px 6px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.cs-badge[data-tone="ok"] { color: var(--ok); border-color: var(--ok); }
+.cs-badge[data-tone="danger"] { color: var(--danger); border-color: var(--danger); }
+.cs-badge[data-tone="warn"] { color: var(--warn); border-color: var(--warn); }
+
+.cs-button {
+  font: inherit;
+  padding: var(--space) var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.cs-button:hover { border-color: var(--accent); }
+.cs-button:disabled { opacity: 0.5; cursor: default; }
+
+.cs-table { border-collapse: collapse; width: 100%; font-family: var(--font-mono); font-size: 12px; }
+.cs-table th, .cs-table td {
+  border: 1px solid var(--border);
+  padding: 4px 6px;
+  text-align: left;
+  white-space: nowrap;
+}
+.cs-table th { background: var(--surface); }
+
+.cs-scroll-x { overflow-x: auto; }
+
+/* ==========================================================================
+   Baron storefront
+   Extends the tokens above; adds nothing that isn't a variable or a class.
+   ========================================================================== */
+
+:root {
+  --ink: var(--nl-ink);
+  --ink-soft: var(--nl-ink);
+  --paper: var(--nl-mint);
+  --sand: var(--nl-mint);
+  --line: var(--nl-ink);
+  --brand: var(--nl-ink);
+  --brand-soft: var(--nl-ink-raised);
+  --serif: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --shell: 1180px;
+}
+
+body { background: var(--paper); color: var(--ink); }
+
+.nl-shell { max-width: var(--shell); margin: 0 auto; padding: 0 var(--space-3); }
+
+/* ---- header ---- */
+.nl-header {
+  position: sticky; top: 0; z-index: 40;
+  background: rgba(251, 250, 248, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.nl-header-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-3); padding: var(--space-2) 0;
+}
+.nl-wordmark {
+  font-family: var(--serif); font-size: 22px; letter-spacing: 0.01em;
+  color: var(--brand); text-decoration: none; font-weight: 600;
+}
+.nl-navlinks { display: flex; gap: var(--space-3); align-items: center; }
+.nl-navlinks a {
+  color: var(--ink-soft); text-decoration: none; font-size: 14px;
+  padding-bottom: 2px; border-bottom: 1px solid transparent;
+}
+.nl-navlinks a:hover { color: var(--ink); border-bottom-color: var(--brand); }
+.nl-cartbadge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--brand); color: var(--nl-mint); border-radius: 999px;
+  padding: 6px 14px; font-size: 13px; text-decoration: none;
+}
+
+/* ---- hero ---- */
+.nl-hero { padding: var(--space-4) 0 var(--space-3); }
+.nl-hero h1 {
+  font-family: var(--serif); font-weight: 500;
+  font-size: clamp(34px, 5vw, 56px); line-height: 1.05; margin: 0 0 var(--space-2);
+  letter-spacing: -0.01em;
+}
+.nl-hero p { color: var(--ink-soft); font-size: 17px; max-width: 52ch; margin: 0; }
+.nl-tagline { font-family: var(--serif); font-style: italic; color: var(--brand-soft); }
+
+/* ---- product grid ---- */
+.nl-grid {
+  display: grid; gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+}
+.nl-card { display: flex; flex-direction: column; gap: 10px; text-decoration: none; color: inherit; }
+.nl-thumb {
+  aspect-ratio: 4 / 5; width: 100%; object-fit: cover;
+  border-radius: var(--radius); background: var(--sand); display: block;
+}
+.nl-card h3 { font-family: var(--serif); font-weight: 500; font-size: 17px; margin: 0; }
+.nl-meta { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space); }
+.nl-price { font-size: 16px; }
+.nl-sub { color: var(--ink-soft); font-size: 13px; }
+.nl-oos { color: var(--danger); font-size: 13px; }
+
+/* ---- pdp ---- */
+.nl-pdp { display: grid; grid-template-columns: 1.1fr 1fr; gap: var(--space-4); align-items: start; }
+.nl-pdp img { width: 100%; border-radius: var(--radius); background: var(--sand); }
+.nl-pdp h1 { font-family: var(--serif); font-weight: 500; font-size: 34px; margin: 0 0 var(--space); }
+@media (max-width: 760px) { .nl-pdp { grid-template-columns: 1fr; } }
+
+/* ---- buttons ---- */
+.nl-btn {
+  font: inherit; font-size: 15px; padding: 12px 22px; border-radius: 999px;
+  border: 1px solid var(--brand); background: var(--brand); color: var(--nl-mint); cursor: pointer;
+}
+.nl-btn:hover { background: var(--brand-soft); }
+.nl-btn:disabled { opacity: 0.45; cursor: default; }
+.nl-btn--ghost { background: transparent; color: var(--brand); }
+.nl-btn--ghost:hover { background: var(--nl-amber); color: var(--nl-ink); }
+
+/* ---- panels ---- */
+.nl-panel { background: var(--nl-mint); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--space-3); }
+.nl-note { background: var(--sand); border-radius: var(--radius); padding: var(--space-2); font-size: 14px; }
+
+/* ---- modal ---- */
+.nl-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(20, 24, 31, 0.42);
+  display: grid; place-items: center; z-index: 60; padding: var(--space-2);
+}
+.nl-modal {
+  background: var(--nl-mint); border-radius: 10px; padding: var(--space-3);
+  max-width: 460px; width: 100%; box-shadow: 0 18px 50px rgba(0,0,0,0.18);
+}
+
+/* ---- evidence ---- */
+.nl-evidence { border-top: 1px dashed var(--line); margin-top: var(--space-3); padding-top: var(--space-2); }
+.nl-evidence pre { background: var(--sand); font-size: 11px; }
+
+/* ---- steps / orders ---- */
+.nl-steps { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.nl-step { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line); font-size: 13px; color: var(--ink-soft); }
+.nl-step[data-on="true"] { background: var(--brand); border-color: var(--brand); color: var(--nl-mint); }
+
+/* ==========================================================================
+   Control-plane skin. Razorpay-adjacent: navy, one accent blue, tabular
+   figures, generous white space. Overrides the storefront tokens above; the
+   shop module keeps its photography on /shop.
+   ========================================================================== */
+
+:root {
+  --navy: var(--nl-ink);
+  --navy-soft: var(--nl-ink-raised);
+  --ink: var(--nl-ink);
+  --ink-soft: var(--nl-ink);
+  --paper: var(--nl-mint);
+  --sand: var(--nl-mint);
+  --line: var(--nl-ink);
+  --brand: var(--nl-ink);
+  --brand-soft: var(--nl-ink-raised);
+  --accent: var(--nl-green);
+  --serif: ui-sans-serif, "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+body { background: var(--paper); }
+
+/* Money reads as money: aligned digits everywhere. */
+.mono, pre, code, .cs-table, .nl-price, [data-price-paise], .nl-num {
+  font-variant-numeric: tabular-nums;
+}
+
+.nl-header { background: var(--navy); border-bottom: none; }
+.nl-wordmark { color: var(--nl-mint); letter-spacing: -0.01em; font-weight: 650; }
+.nl-navlinks a { color: var(--nl-mint-64); }
+.nl-navlinks a:hover { color: var(--nl-mint); border-bottom-color: var(--accent); }
+.nl-cartbadge { background: var(--accent); }
+
+.nl-hero { padding: var(--space-4) 0 var(--space-3); max-width: 62ch; }
+.nl-hero h1 { font-weight: 650; letter-spacing: -0.02em; }
+.nl-tagline { font-style: normal; color: var(--ink-soft); }
+
+.nl-btn { background: var(--accent); border-color: var(--accent); border-radius: 8px; font-weight: 550; }
+.nl-btn:hover { background: var(--nl-ink); border-color: var(--nl-ink); color: var(--nl-mint); }
+.nl-btn--ghost { background: var(--nl-mint); color: var(--navy); border-color: var(--line); }
+/* Not var(--sand): that resolves to mint, the page background, so the button
+   disappeared under the cursor. Amber is the one fill that stays visible. */
+.nl-btn--ghost:hover { background: var(--nl-amber); border-color: var(--nl-ink); color: var(--nl-ink); }
+
+.nl-panel { border-radius: 10px; }
+.nl-note { background: var(--sand); border: 1px solid var(--line); }
+
+/* Console blocks on the home page */
+.nl-blocks { display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.nl-block {
+  display: block; text-decoration: none; color: inherit;
+  border: 1px solid var(--line); border-radius: 10px; padding: var(--space-3);
+  background: var(--nl-mint);
+}
+.nl-block:hover { border-color: var(--accent); }
+.nl-block h3 { font-size: 15px; font-weight: 620; margin: 0 0 6px; color: var(--navy); }
+.nl-block p { margin: 0; font-size: 14px; color: var(--ink-soft); }
+.nl-kicker {
+  font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-soft); font-weight: 600;
+}
+
+/* Metric readouts */
+.nl-metrics { display: grid; gap: var(--space-2); grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.nl-metric { border: 1px solid var(--line); border-radius: 8px; padding: var(--space-2); background: var(--nl-mint); }
+.nl-metric .v { font-size: 20px; font-weight: 620; font-variant-numeric: tabular-nums; }
+.nl-metric .k { font-size: 12px; color: var(--ink-soft); }
+
+/* Meter for campaign spend */
+.nl-meter { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.nl-meter > i { display: block; height: 100%; background: var(--accent); }
+.nl-meter[data-blocked="true"] > i { background: var(--danger); }
+
+/* Status pills */
+.nl-pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 560; border: 1px solid var(--line); }
+.nl-pill[data-tone="live"] { color: var(--ok); border-color: var(--ok); }
+.nl-pill[data-tone="paused"] { color: var(--warn); border-color: var(--warn); }
+.nl-pill[data-tone="expired"] { color: var(--ink-soft); }
+.nl-pill[data-tone="blocked"] { color: var(--danger); border-color: var(--danger); }
+
+/* Audit explainability */
+.nl-explain { font-size: 14px; color: var(--ink); margin: 0; }
+details.nl-row { border: 1px solid var(--line); border-radius: 8px; padding: var(--space-2); background: var(--nl-mint); }
+details.nl-row + details.nl-row { margin-top: 8px; }
+details.nl-row summary { cursor: pointer; font-size: 14px; }
+details.nl-row[open] summary { margin-bottom: var(--space); }

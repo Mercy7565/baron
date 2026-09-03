@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "moduleDetection": "force",
+    "jsx": "preserve",
+
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+
+    "noEmit": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["apps/web/src/*"],
+      "@countersign/campaigns": ["packages/campaigns/src/index.ts"],
+      "@countersign/catalog": ["packages/catalog/src/index.ts"],
+      "@countersign/contracts": ["packages/contracts/src/index.ts"],
+      "@countersign/guard": ["packages/guard/src/index.ts"],
+      "@countersign/kernel": ["packages/kernel/src/index.ts"],
+      "@countersign/mandates": ["packages/mandates/src/index.ts"],
+      "@countersign/mcp": ["packages/mcp/src/index.ts"],
+      "@countersign/ledger": ["packages/ledger/src/index.ts"],
+      "@countersign/db": ["packages/db/src/index.ts"],
+      "@countersign/razorpay": ["packages/razorpay/src/index.ts"],
+      "@countersign/orders": ["packages/orders/src/index.ts"],
+      "@countersign/quotes": ["packages/quotes/src/index.ts"],
+      "@countersign/resume": ["packages/resume/src/index.ts"],
+      "@countersign/vault": ["packages/vault/src/index.ts"],
+      "@countersign/vault/payer": ["packages/vault/src/payer.ts"]
+    }
+  },
+  "include": [
+    "scripts/**/*.ts",
+    "packages/*/src/**/*.ts",
+    "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx"
+  ],
+  "exclude": ["node_modules", "**/node_modules", "**/.next", "**/dist"]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "@countersign/mandates",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AP2-shaped local mandates. Hashed and chained, not FIDO or verifiable credentials.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts", "./package.json": "./package.json" },
+  "files": ["src"],
+  "scripts": { "typecheck": "tsc --noEmit" }
+}

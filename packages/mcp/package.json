@@ -1,0 +1,12 @@
+{
+  "name": "@countersign/mcp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP stdio server exposing CounterSign tools. Talks to the app over HTTP only.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": { ".": "./src/index.ts", "./package.json": "./package.json" },
+  "files": ["src"],
+  "scripts": { "typecheck": "tsc --noEmit" }
+}

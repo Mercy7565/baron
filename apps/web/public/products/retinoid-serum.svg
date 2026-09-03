@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" width="900" height="900" role="img" aria-label="Amber glass dropper bottle of retinoid night serum">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e9f2ec"/>
+      <stop offset="100%" stop-color="#c5e1d4"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#7a3f1c"/>
+      <stop offset="22%" stop-color="#c8762f"/>
+      <stop offset="52%" stop-color="#e8923a"/>
+      <stop offset="78%" stop-color="#a85524"/>
+      <stop offset="100%" stop-color="#6d3517"/>
+    </linearGradient>
+    <linearGradient id="cap" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1b271f"/>
+      <stop offset="30%" stop-color="#33473b"/>
+      <stop offset="60%" stop-color="#24352c"/>
+      <stop offset="100%" stop-color="#16201a"/>
+    </linearGradient>
+    <radialGradient id="shadow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#24352c" stop-opacity="0.34"/>
+      <stop offset="100%" stop-color="#24352c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="900" height="900" fill="url(#bg)"/>
+  <ellipse cx="450" cy="742" rx="196" ry="34" fill="url(#shadow)"/>
+
+  <!-- dropper cap -->
+  <rect x="399" y="150" width="102" height="128" rx="14" fill="url(#cap)"/>
+  <rect x="399" y="150" width="30" height="128" rx="14" fill="#ffffff" opacity="0.10"/>
+  <rect x="391" y="268" width="118" height="26" rx="10" fill="#1b271f"/>
+
+  <!-- neck -->
+  <rect x="416" y="292" width="68" height="42" fill="#8a3a1c"/>
+
+  <!-- body -->
+  <path d="M368 332 h164 a34 34 0 0 1 34 34 v300 a44 44 0 0 1 -44 44 h-144 a44 44 0 0 1 -44 -44 v-300 a34 34 0 0 1 34 -34 z" fill="url(#glass)"/>
+  <!-- specular highlight -->
+  <rect x="392" y="356" width="26" height="292" rx="13" fill="#ffffff" opacity="0.30"/>
+  <rect x="516" y="376" width="12" height="250" rx="6" fill="#ffffff" opacity="0.14"/>
+
+  <!-- label -->
+  <rect x="356" y="432" width="188" height="180" rx="8" fill="#f3f7f4" opacity="0.96"/>
+  <rect x="356" y="432" width="188" height="8" fill="#8a3a1c" opacity="0.85"/>
+  <text x="450" y="486" font-family="Inter, Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#24352c" text-anchor="middle">RETINOID</text>
+  <text x="450" y="528" font-family="Inter, Helvetica, Arial, sans-serif" font-size="46" font-weight="700" fill="#8a3a1c" text-anchor="middle">0.3%</text>
+  <text x="450" y="562" font-family="Inter, Helvetica, Arial, sans-serif" font-size="21" letter-spacing="2" fill="#24352c" text-anchor="middle">NIGHT SERUM</text>
+  <text x="450" y="594" font-family="Inter, Helvetica, Arial, sans-serif" font-size="19" fill="#4a5c51" text-anchor="middle">30 ml</text>
+</svg>

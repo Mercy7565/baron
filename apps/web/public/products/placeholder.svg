@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" width="900" height="900" role="img" aria-label="Product image unavailable">
+  <rect width="900" height="900" fill="#c5e1d4"/>
+  <rect x="330" y="264" width="240" height="372" rx="26" fill="#24352c" opacity="0.13"/>
+  <rect x="386" y="196" width="128" height="80" rx="12" fill="#24352c" opacity="0.20"/>
+  <text x="450" y="712" font-family="Inter, Helvetica, Arial, sans-serif" font-size="26" fill="#24352c" opacity="0.62" text-anchor="middle">image unavailable</text>
+</svg>

@@ -1,0 +1,34 @@
+{
+  "name": "@countersign/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@countersign/campaigns": "workspace:*",
+    "@countersign/catalog": "workspace:*",
+    "@countersign/contracts": "workspace:*",
+    "@countersign/db": "workspace:*",
+    "@countersign/guard": "workspace:*",
+    "@countersign/kernel": "workspace:*",
+    "@countersign/ledger": "workspace:*",
+    "@countersign/mandates": "workspace:*",
+    "@countersign/orders": "workspace:*",
+    "@countersign/quotes": "workspace:*",
+    "@countersign/razorpay": "workspace:*",
+    "@countersign/resume": "workspace:*",
+    "@countersign/vault": "workspace:*",
+    "next": "^15.0.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
+  }
+}

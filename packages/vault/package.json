@@ -1,0 +1,20 @@
+{
+  "name": "@countersign/vault",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tokenised payment instruments and simulated capture. Never handles a PAN.",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./payer": "./src/payer.ts",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  }
+}

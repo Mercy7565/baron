@@ -1,0 +1,69 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@countersign/contracts": [
+        "../../packages/contracts/src/index.ts"
+      ],
+      "@countersign/kernel": [
+        "../../packages/kernel/src/index.ts"
+      ],
+      "@countersign/ledger": [
+        "../../packages/ledger/src/index.ts"
+      ],
+      "@countersign/db": [
+        "../../packages/db/src/index.ts"
+      ],
+      "@countersign/razorpay": [
+        "../../packages/razorpay/src/index.ts"
+      ],
+      "@countersign/catalog": [
+        "../../packages/catalog/src/index.ts"
+      ],
+      "@countersign/guard": [
+        "../../packages/guard/src/index.ts"
+      ],
+      "@countersign/campaigns": [
+        "../../packages/campaigns/src/index.ts"
+      ],
+      "@countersign/mandates": [
+        "../../packages/mandates/src/index.ts"
+      ],
+      "@countersign/quotes": [
+        "../../packages/quotes/src/index.ts"
+      ],
+      "@countersign/vault": [
+        "../../packages/vault/src/index.ts"
+      ],
+      "@countersign/vault/payer": [
+        "../../packages/vault/src/payer.ts"
+      ],
+      "@countersign/orders": [
+        "../../packages/orders/src/index.ts"
+      ],
+      "@countersign/resume": [
+        "../../packages/resume/src/index.ts"
+      ]
+    },
+    "allowJs": true,
+    "incremental": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

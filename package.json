@@ -1,0 +1,32 @@
+{
+  "name": "countersign",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.12.3",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @countersign/web dev",
+    "test": "vitest run",
+    "recon": "tsx scripts/recon.ts",
+    "demo:clamp": "tsx scripts/demo-clamp.ts",
+    "replay:webhook": "tsx scripts/replay-webhook.ts",
+    "mcp": "tsx packages/mcp/src/server.ts",
+    "verify": "tsc --noEmit -p tsconfig.base.json && vitest run",
+    "db:push": "pnpm --filter @countersign/db db:push",
+    "data:clear": "tsx scripts/clear-test-data.ts"
+  },
+  "dependencies": {
+    "next": "^15.0.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.5"
+  }
+}
