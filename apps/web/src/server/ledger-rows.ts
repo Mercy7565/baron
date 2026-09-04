@@ -5,6 +5,7 @@ import { allOrders } from "@countersign/orders";
 import { allQuotes } from "@countersign/quotes";
 
 import { campaignById } from "@/lib/campaigns";
+import { campaignNameOf } from "@/server/campaign-rows";
 import { CATALOG } from "@/lib/catalog";
 import { DEV_POLICY } from "@/lib/policy";
 import { bestClearableBps } from "@/server/coupons";
@@ -103,7 +104,26 @@ export function ledgerRows(): LedgerRow[] {
       CATALOG,
       q.lines.map((l) => ({ sku_id: l.sku_id, qty: l.qty })),
     );
-    const campaign = q.campaign_id === null ? null : campaignById(q.campaign_id);
+    /**
+     * Which campaign this row belongs to, in order of what actually caused it.
+     *
+     * A BOGO row showed "none" because only `quote.campaign_id` was consulted,
+     * and a merchant-created gift never sets that field — the campaign is on
+     * the gift line. Order of preference: the campaign that gave the gift, then
+     * one whose suggestion the shopper accepted and paid for, then the campaign
+     * that was in play on the quote. Never a guess: if none of the three names
+     * a campaign, the row says none.
+     */
+    const giftCampaign = (order?.gift_lines ?? q.gift_lines ?? [])
+      .map((g) => g.from_campaign_id)
+      .find((id): id is string => typeof id === "string" && id !== "") ?? null;
+    const suggestedCampaign =
+      Object.values(order?.line_origins ?? q.line_origins ?? {}).find(
+        (id): id is string => typeof id === "string" && id !== "",
+      ) ?? null;
+
+    const campaignId = giftCampaign ?? suggestedCampaign ?? q.campaign_id;
+    const campaignName = campaignNameOf(campaignId);
 
     return {
       key: q.quote_id,
@@ -115,7 +135,7 @@ export function ledgerRows(): LedgerRow[] {
           ? q.intent_text
           : `${q.asked_bps / 100}% on ${q.lines.length} line${q.lines.length === 1 ? "" : "s"}`,
       found: q.lines.map((l) => `${l.title} ×${l.qty}`).join(", ") || "—",
-      campaign: campaign?.name ?? (q.campaign_id === null ? null : q.campaign_id),
+      campaign: campaignName ?? campaignId,
       upsell_accepted: q.upsell_accepted ?? null,
       asked_bps: q.asked_bps,
       applied_bps: q.applied_bps,
@@ -135,8 +155,10 @@ export function ledgerRows(): LedgerRow[] {
       prev_hash: audit?.prev_hash ?? null,
       margin_bps: priced.margin_bps,
       live: isLiveQuote(q),
-      campaign_dry:
-        campaign !== null && affordableHintBps(campaign, q.subtotal_paise) === 0,
+      campaign_dry: (() => {
+        const seed = campaignId === null ? null : campaignById(campaignId);
+        return seed !== null && affordableHintBps(seed, q.subtotal_paise) === 0;
+      })(),
     };
   });
 

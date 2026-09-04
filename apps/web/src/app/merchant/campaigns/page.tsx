@@ -5,7 +5,7 @@ import { allQuotes } from "@countersign/quotes";
 import { ConsoleChrome } from "@/components/ConsoleChrome";
 import { CAMPAIGNS, campaignSpentPaise, isCampaignActive } from "@/lib/campaigns";
 import { CATALOG } from "@/lib/catalog";
-import { cancelledSeedIds, createdCampaigns } from "@/server/overlay";
+import { campaignRows } from "@/server/campaign-rows";
 
 import { CreateCampaign, type SkuOption } from "./CreateCampaign";
 import { RowControls } from "./RowControls";
@@ -47,9 +47,6 @@ function suggests(c: Campaign): string {
 
 export default function MerchantCampaigns() {
   const now = new Date();
-  const shipped: Campaign[] = CAMPAIGNS.map((c) => ({ ...c, active: isCampaignActive(c.id) }));
-  const mine = createdCampaigns();
-  const cancelled = cancelledSeedIds();
   const quotes = allQuotes();
 
   /**
@@ -75,35 +72,30 @@ export default function MerchantCampaigns() {
     .filter((p) => !p.blocked)
     .map((p) => ({ id: p.id, title: p.title }));
 
-  const table = [
-    ...shipped.map((c) => ({
-      id: c.id,
-      name: c.name,
-      cancelled: cancelled.has(c.id),
-      state: (cancelled.has(c.id) ? "Cancelled" : stateOf(c, now)) as State,
-      suggests: suggests(c),
-      window: `${day(c.window_start)} – ${day(c.window_end)}`,
-      budget: c.spend_ceiling_paise,
-      spent: spentOn(c.id),
-      sales: salesOn(c.id),
-    })),
-    ...mine.map((c) => ({
-      id: c.id,
-      name: c.name,
-      cancelled: c.cancelled === true,
-      state: (c.cancelled === true
-        ? "Cancelled"
-        : stateOf({ window_start: c.starts_at, window_end: c.ends_at, active: c.active }, now)) as State,
-      suggests:
-        c.reward_sku_id === null
-          ? c.trigger_sku_ids.join(", ")
-          : (CATALOG.products.find((p) => p.id === c.reward_sku_id)?.title ?? c.reward_sku_id),
-      window: `${day(c.starts_at)} – ${day(c.ends_at)}`,
-      budget: c.budget_paise,
-      spent: spentOn(c.id),
-      sales: salesOn(c.id),
-    })),
-  ];
+  // The same rows the overview counts, so the two pages cannot disagree.
+  const table = campaignRows(now).map((c) => ({
+    id: c.id,
+    name: c.name,
+    cancelled: c.state === "Cancelled",
+    state: c.state,
+    suggests:
+      c.reward_sku_id !== null
+        ? (CATALOG.products.find((p) => p.id === c.reward_sku_id)?.title ?? c.reward_sku_id)
+        : c.trigger_sku_ids
+            .map((id) => CATALOG.products.find((p) => p.id === id)?.title ?? id)
+            .join(", ") || "—",
+    // A campaign whose reward has been taken off the shop cannot suggest it.
+    reward_missing:
+      c.reward_sku_id !== null &&
+      !CATALOG.products.some(
+        (p) => p.id === c.reward_sku_id && !p.blocked && p.availability === "in_stock",
+      ),
+    window: `${day(c.starts_at)} – ${day(c.ends_at)}`,
+    budget: c.budget_paise,
+    spent: c.spent_paise,
+    left: c.left_paise,
+    sales: salesOn(c.id),
+  }));
 
   return (
     <ConsoleChrome current="/merchant/campaigns">
@@ -139,7 +131,10 @@ export default function MerchantCampaigns() {
                     {c.sales === 0 ? "no sales yet" : `${c.sales} paid sale${c.sales === 1 ? "" : "s"}`}
                   </div>
                 </td>
-                <td style={{ maxWidth: 240 }}>{c.suggests}</td>
+                <td style={{ maxWidth: 240 }}>
+                  {c.suggests}
+                  {c.reward_missing && <div className="mc-tiny">SKU removed</div>}
+                </td>
                 <td style={{ whiteSpace: "nowrap" }}>{c.window}</td>
                 <td>
                   <span
@@ -158,7 +153,7 @@ export default function MerchantCampaigns() {
                 <td className="num">{rupees(c.budget)}</td>
                 <td className="num">{rupees(c.spent)}</td>
                 <td className="num">
-                  <strong>{rupees(Math.max(0, c.budget - c.spent))}</strong>
+                  <strong>{rupees(c.left)}</strong>
                 </td>
                 <td>
                   <RowControls

@@ -1,12 +1,11 @@
-import { inWindow } from "@countersign/campaigns";
 import { readAuditRecords, verifyAuditChain } from "@countersign/ledger";
 
 import { priceCart } from "@countersign/catalog";
 
 import { ConsoleChrome } from "@/components/ConsoleChrome";
-import { CAMPAIGNS, isCampaignActive } from "@/lib/campaigns";
 import { CATALOG } from "@/lib/catalog";
 import { DEFAULT_MARGIN_FLOOR_BPS, DEV_POLICY } from "@/lib/policy";
+import { campaignRows } from "@/server/campaign-rows";
 import { causeOf, couponPercentOf, ledgerRows, paidLedgerRows } from "@/server/ledger-rows";
 
 import { MarginFloor, type FloorSample } from "./MarginFloor";
@@ -40,10 +39,27 @@ export default function MerchantOverview() {
 
   const chain = verifyAuditChain(readAuditRecords());
 
+  /**
+   * Every tile reads the same store the page it summarises reads.
+   *
+   * These used to be computed here from the shipped constants: the SKU count
+   * ignored merchant edits, and the campaign counts read only `CAMPAIGNS` while
+   * ignoring cancellation and merchant-created rows entirely. A cancelled
+   * campaign still counted as live, and its budget was still counted as
+   * available. An overview that disagrees with the page beneath it is worse
+   * than no overview.
+   *
+   *   SKUs on sale   -> CATALOG (overlay applied), same filter as /shop
+   *   campaigns live -> campaignRows(), same rows as /merchant/campaigns
+   *   budget left    -> sum of LEFT on those Live rows only
+   *   quotes / links -> the quote and order logs
+   *   audit chain    -> the audit log
+   */
   const sellable = CATALOG.products.filter((p) => !p.blocked && p.availability === "in_stock");
-  const liveCampaigns = CAMPAIGNS.filter((c) => isCampaignActive(c.id) && inWindow(c, now));
-  const budget = liveCampaigns.reduce((n, c) => n + c.spend_ceiling_paise, 0);
-  const spent = liveCampaigns.reduce((n, c) => n + c.spent_paise, 0);
+
+  const allCampaigns = campaignRows(now);
+  const liveCampaigns = allCampaigns.filter((c) => c.live);
+  const budgetLeft = liveCampaigns.reduce((n, c) => n + c.left_paise, 0);
 
   const withLink = live.filter((r) => r.outcome !== "no link");
 
@@ -116,7 +132,7 @@ export default function MerchantOverview() {
           <div className="k">campaigns live now</div>
         </div>
         <div className="mc-stat">
-          <div className="v">{rupees(Math.max(0, budget - spent))}</div>
+          <div className="v">{rupees(budgetLeft)}</div>
           <div className="k">budget left on live campaigns</div>
         </div>
         <div className="mc-stat">

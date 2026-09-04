@@ -143,6 +143,8 @@ function merchantMatch(
     if (!c.trigger_sku_ids.some((id) => inCart.has(id))) continue;
     if (c.reward_sku_id === null || inCart.has(c.reward_sku_id)) continue;
 
+    // A reward the merchant has taken off the shop cannot be offered. The
+    // campaign row says "SKU removed" so this is visible rather than silent.
     const reward = productById(CATALOG, c.reward_sku_id);
     if (!sellable(reward)) continue;
 

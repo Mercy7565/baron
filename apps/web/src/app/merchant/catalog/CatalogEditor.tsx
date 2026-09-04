@@ -33,6 +33,7 @@ export function CatalogEditor({ products }: { products: Product[] }) {
   );
   const [saving, setSaving] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<string | null>(null);
 
   function edit(id: string, patch: Partial<Draft>): void {
     setDrafts((d) => ({ ...d, [id]: { ...(d[id] as Draft), ...patch } }));
@@ -50,6 +51,29 @@ export function CatalogEditor({ products }: { products: Product[] }) {
       window.setTimeout(() => setSaved(null), 1800);
     } finally {
       setSaving(null);
+    }
+  }
+
+  /**
+   * Take a product off the shop.
+   *
+   * `active: false` rather than a delete: the row leaves /shop and the SKU
+   * count, but the product still exists, so a paid order that contains it can
+   * still name it. Deleting the record would rewrite history a customer already
+   * paid for. Put it back by ticking On sale.
+   */
+  async function remove(id: string): Promise<void> {
+    setSaving(id);
+    try {
+      await fetch("/api/merchant/catalog", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sku_id: id, ...drafts[id], active: false, stock_qty: 0 }),
+      });
+      window.location.reload();
+    } finally {
+      setSaving(null);
+      setConfirming(null);
     }
   }
 
@@ -117,13 +141,39 @@ export function CatalogEditor({ products }: { products: Product[] }) {
                   />
                 </td>
                 <td>
-                  <button
-                    className="mc-btn"
-                    disabled={!dirty || saving === p.id}
-                    onClick={() => void save(p.id)}
-                  >
-                    {saving === p.id ? "…" : saved === p.id ? "Saved" : "Save"}
-                  </button>
+                  {confirming === p.id ? (
+                    <div className="cs-row" style={{ gap: 6, flexWrap: "nowrap" }}>
+                      <span className="mc-tiny">Take off the shop?</span>
+                      <button
+                        className="mc-btn"
+                        disabled={saving === p.id}
+                        onClick={() => void remove(p.id)}
+                      >
+                        {saving === p.id ? "…" : "Yes"}
+                      </button>
+                      <button className="mc-btn mc-btn--quiet" onClick={() => setConfirming(null)}>
+                        No
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="cs-row" style={{ gap: 6, flexWrap: "nowrap" }}>
+                      <button
+                        className="mc-btn"
+                        disabled={!dirty || saving === p.id}
+                        onClick={() => void save(p.id)}
+                      >
+                        {saving === p.id ? "…" : saved === p.id ? "Saved" : "Save"}
+                      </button>
+                      {p.availability === "in_stock" && !p.blocked && (
+                        <button
+                          className="mc-btn mc-btn--quiet"
+                          onClick={() => setConfirming(p.id)}
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </td>
               </tr>
             );
