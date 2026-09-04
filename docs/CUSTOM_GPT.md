@@ -27,8 +27,9 @@ then use the deployed origin as `{BASE}` everywhere below. The live demo is
    {BASE}/.well-known/openai-openapi.yaml
    ```
 
-   Six operations appear: `resolve_shop_code`, `search_catalog`, `get_product`,
-   `create_quote`, `get_quote`, `pay_quote`.
+   Eight operations appear: `resolve_shop_code`, `search_catalog`,
+   `get_product`, `create_quote`, `get_quote`, `pay_quote`, `get_payment`,
+   `suggest_add_on`.
 3. **Authentication** - *API Key*, Auth Type *Custom*, header name
    `x-baron-shopper`, value `aryan`. This is demo identity only: it maps the GPT
    to the built-in demo customer so its orders appear in that account's Orders
@@ -60,6 +61,10 @@ two identical.
 >
 > 6. pay_quote — only after the shopper has seen the total and said yes. Give them short_url. Nothing is paid yet: the link is an invitation, not a receipt.
 >
+> 7. get_payment — after pay, call this when they ask if it went through. It reads Razorpay, so it answers even if the quote is no longer on the server. Report paid and the captured amount; if it is not paid, give short_url again.
+>
+> 8. suggest_add_on — after a quote, offer at most one real add-on from this action and nothing else. Ask the shopper before adding it, then call create_quote with the new lines. Never invent a product or a price, and never offer a second discount.
+>
 > Never ask for a card number, a CVV, an expiry date or a one-time code. You will never be given one and you cannot take a payment. The shopper pays on Razorpay's own page, which you cannot see.
 >
 > This is a Custom GPT using Actions against a demo store on Razorpay test mode. It is not official ChatGPT Shopping.
@@ -74,6 +79,8 @@ two identical.
 | `create_quote` | `POST /api/gpt/quote` | The only place a total is decided. |
 | `get_quote` | `GET /api/gpt/quote/{quoteId}` | Read a price back. An expired quote says so rather than re-pricing itself. |
 | `pay_quote` | `POST /api/gpt/pay` | Turn an agreed quote into a Payment Link. Captures nothing. |
+| `get_payment` | `GET /api/gpt/payment` | Did the money move? Reads Razorpay, so it answers after the local quote is gone. |
+| `suggest_add_on` | `GET /api/gpt/suggest` | At most one in-stock add-on from bought-together data or a live campaign. |
 
 ## What a spoken price is worth
 

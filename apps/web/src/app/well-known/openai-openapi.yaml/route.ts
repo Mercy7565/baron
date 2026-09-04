@@ -9,10 +9,10 @@ export const runtime = "nodejs";
  *
  * The Action schema a Custom GPT imports.
  *
- * Written to ChatGPT's importer, which is stricter than the spec in three ways
- * that all failed silently or late:
+ * Written to ChatGPT's importer, which is stricter than the spec and has moved
+ * on what it accepts:
  *
- *   - it wants OpenAPI 3.0.x, not 3.1;
+ *   - it now requires OpenAPI 3.1.0 or 3.1.1, having previously refused 3.1;
  *   - `components.schemas` has to be a real object, so responses are $ref'd
  *     rather than inlined;
  *   - every description is capped at 300 characters, and an over-long one
@@ -36,7 +36,7 @@ export function GET(request: Request): Response {
       ? `${new URL(request.url).protocol}//${host}`
       : configured;
 
-  const yaml = `openapi: 3.0.3
+  const yaml = `openapi: 3.1.0
 info:
   title: Baron agent shopping
   description: Shop a Baron store. The catalog sets prices and a policy kernel sets discounts, so a price this API returns cannot be argued with. No endpoint returns or accepts card details.
@@ -215,6 +215,68 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /api/gpt/payment:
+    get:
+      operationId: get_payment
+      summary: Check whether a payment went through
+      description: Use when the shopper asks if their payment worked. Answers from Razorpay, so it still works if the quote is no longer on this server. Returns paid, the captured amount and a pay id once captured.
+      parameters:
+        - name: quote_id
+          in: query
+          required: false
+          description: The quote_id from create_quote.
+          schema:
+            type: string
+        - name: payment_link_id
+          in: query
+          required: false
+          description: The payment_link_id from pay_quote. Either this or quote_id is required.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Whether the money moved, and how much.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentStatus'
+        '400':
+          description: Neither quote_id nor payment_link_id was given.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/gpt/suggest:
+    get:
+      operationId: suggest_add_on
+      summary: Suggest one real add-on
+      description: Returns at most one in-stock product from this shop, drawn from bought-together data or a live campaign. Ask the shopper before adding it, then call create_quote with the new lines. Never invent a product.
+      parameters:
+        - name: shop_code
+          in: query
+          required: true
+          description: The code returned by resolve_shop_code.
+          schema:
+            type: string
+        - name: sku_ids
+          in: query
+          required: true
+          description: Comma-separated sku_ids already in the basket.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: At most one suggestion, or none.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuggestResult'
+        '404':
+          description: No shop uses that code.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   schemas:
     Error:
@@ -274,8 +336,7 @@ components:
         price_inr:
           type: number
         size:
-          type: string
-          nullable: true
+          type: [string, 'null']
         category:
           type: array
           items:
@@ -292,9 +353,9 @@ components:
         query:
           type: string
         confident_match:
-          allOf:
+          oneOf:
             - $ref: '#/components/schemas/ProductSummary'
-          nullable: true
+            - type: 'null'
           description: Null means this shop does not sell that. Do not substitute.
         results:
           type: array
@@ -371,11 +432,9 @@ components:
         applied_bps:
           type: integer
         offer_id:
-          type: string
-          nullable: true
+          type: [string, 'null']
         campaign_name:
-          type: string
-          nullable: true
+          type: [string, 'null']
         expires_at:
           type: string
         reason:
@@ -385,9 +444,9 @@ components:
           items:
             $ref: '#/components/schemas/RefusedSku'
         spoken_total:
-          allOf:
+          oneOf:
             - $ref: '#/components/schemas/SpokenTotal'
-          nullable: true
+            - type: 'null'
         next_step:
           type: string
     QuoteLine:
@@ -432,8 +491,7 @@ components:
         applied_bps:
           type: integer
         offer_id:
-          type: string
-          nullable: true
+          type: [string, 'null']
         lines:
           type: array
           items:
@@ -448,11 +506,71 @@ components:
         payable:
           type: boolean
         payment_link_id:
-          type: string
-          nullable: true
+          type: [string, 'null']
         short_url:
+          type: [string, 'null']
+    PaymentStatus:
+      type: object
+      properties:
+        quote_id:
+          type: [string, 'null']
+        payment_link_id:
+          type: [string, 'null']
+        paid:
+          type: boolean
+          description: True only when Razorpay reports a captured payment.
+        legal_total_paise:
+          type: [integer, 'null']
+        legal_total_inr:
+          type: [number, 'null']
+        captured_paise:
+          type: [integer, 'null']
+          description: What Razorpay actually took. Null until a payment is captured.
+        captured_inr:
+          type: [number, 'null']
+        pay_id:
+          type: [string, 'null']
+          description: The Razorpay payment id, once captured.
+        short_url:
+          type: [string, 'null']
+          description: The link to pay, shown only while it is still unpaid.
+        source:
           type: string
-          nullable: true
+        error:
+          type: [string, 'null']
+        next_step:
+          type: string
+    AddOn:
+      type: object
+      properties:
+        sku_id:
+          type: string
+        title:
+          type: string
+        price_paise:
+          type: integer
+        price_inr:
+          type: number
+        free:
+          type: boolean
+          description: True when a live campaign gives this at no charge.
+        in_stock:
+          type: boolean
+        why:
+          type: string
+          description: One line saying why this is suggested.
+    SuggestResult:
+      type: object
+      properties:
+        shop_code:
+          type: string
+        suggestions:
+          type: array
+          description: At most one. An empty list means suggest nothing.
+          items:
+            $ref: '#/components/schemas/AddOn'
+        note:
+          type: string
     PayRequest:
       type: object
       required:
@@ -476,17 +594,13 @@ components:
         applied_bps:
           type: integer
         offer_id:
-          type: string
-          nullable: true
+          type: [string, 'null']
         order_id:
-          type: string
-          nullable: true
+          type: [string, 'null']
         payment_link_id:
-          type: string
-          nullable: true
+          type: [string, 'null']
         short_url:
-          type: string
-          nullable: true
+          type: [string, 'null']
           description: Give this to the shopper. It is all they need.
         idempotent_replay:
           type: boolean

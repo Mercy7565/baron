@@ -34,6 +34,10 @@ How to use the Actions:
 
 6. pay_quote — only after the shopper has seen the total and said yes. Give them short_url. Nothing is paid yet: the link is an invitation, not a receipt.
 
+7. get_payment — after pay, call this when they ask if it went through. It reads Razorpay, so it answers even if the quote is no longer on the server. Report paid and the captured amount; if it is not paid, give short_url again.
+
+8. suggest_add_on — after a quote, offer at most one real add-on from this action and nothing else. Ask the shopper before adding it, then call create_quote with the new lines. Never invent a product or a price, and never offer a second discount.
+
 Never ask for a card number, a CVV, an expiry date or a one-time code. You will never be given one and you cannot take a payment. The shopper pays on Razorpay's own page, which you cannot see.
 
 This is a Custom GPT using Actions against a demo store on Razorpay test mode. It is not official ChatGPT Shopping.`;
@@ -74,9 +78,9 @@ export default function ConnectAiPage() {
           </p>
           <CopyBlock label="Action schema URL" value={schema} />
           <p className="st-muted" style={{ fontSize: 14, marginBottom: 0 }}>
-            Six actions appear: <code>resolve_shop_code</code>, <code>search_catalog</code>,{" "}
+            Eight actions appear: <code>resolve_shop_code</code>, <code>search_catalog</code>,{" "}
             <code>get_product</code>, <code>create_quote</code>, <code>get_quote</code>,{" "}
-            <code>pay_quote</code>.
+            <code>pay_quote</code>, <code>get_payment</code>, <code>suggest_add_on</code>.
           </p>
         </div>
 
@@ -135,6 +139,14 @@ export default function ConnectAiPage() {
           <li>
             It hands you a Razorpay link. Nothing is charged until you pay it, and the order shows
             as paid only once Razorpay confirms.
+          </li>
+          <li>
+            It can suggest one add-on, but only a product this shop actually stocks, and only after
+            asking you. It cannot stack a second discount.
+          </li>
+          <li>
+            It can check whether a payment went through, and reports what Razorpay actually
+            captured.
           </li>
           <li>
             It never receives a card number, a CVV or a one-time code, and it is told never to ask

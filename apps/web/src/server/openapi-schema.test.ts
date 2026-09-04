@@ -5,11 +5,12 @@ import { GET } from "@/app/well-known/openai-openapi.yaml/route";
 /**
  * The Action schema, held to ChatGPT's importer rather than to the spec.
  *
- * The importer is stricter than OpenAPI in three ways, and each one rejects the
- * whole file rather than the offending field — so a schema that reads fine and
- * validates fine can still fail to import, which is exactly what happened:
- * 3.1 was refused, `components.schemas` had to be a real object, and two
- * operation descriptions were over the 300-character cap.
+ * Each of the importer's rules rejects the whole file rather than the offending
+ * field — so a schema that reads fine and validates fine can still fail to
+ * import, which is exactly what happened. It has also changed its mind once:
+ * 3.1 was refused and 3.0.x demanded, then 3.1.0 or 3.1.1 required. The other
+ * rules held throughout — `components.schemas` must be a real object, and
+ * descriptions are capped at 300 characters.
  *
  * These are cheap assertions against an expensive failure. The schema is only
  * ever exercised by a machine we do not control, so nothing here can be
@@ -32,8 +33,16 @@ function descriptions(yaml: string): Array<{ text: string; line: number }> {
 }
 
 describe("the Custom GPT action schema", () => {
-  it("is OpenAPI 3.0.x, because the importer refuses 3.1", async () => {
-    expect(await schema()).toMatch(/^openapi: 3\.0\./m);
+  it("is OpenAPI 3.1.x, which is what the importer now requires", async () => {
+    expect(await schema()).toMatch(/^openapi: 3\.1\.[01]$/m);
+  });
+
+  it("uses 3.1 type unions rather than the 3.0 nullable keyword", async () => {
+    // `nullable` was removed in 3.1. Leaving it behind is silently meaningless
+    // rather than an error, which is the worst way for a schema to be wrong.
+    const yaml = await schema();
+    expect(yaml).not.toContain("nullable:");
+    expect(yaml).toMatch(/type: \[\w+, 'null'\]/);
   });
 
   it("declares components.schemas as a real object", async () => {
@@ -51,7 +60,7 @@ describe("the Custom GPT action schema", () => {
     expect(over.map((d) => `line ${d.line}: ${d.text.length} chars`)).toEqual([]);
   });
 
-  it("keeps all six operations", async () => {
+  it("keeps every operation", async () => {
     const yaml = await schema();
     for (const op of [
       "resolve_shop_code",
@@ -60,6 +69,8 @@ describe("the Custom GPT action schema", () => {
       "create_quote",
       "get_quote",
       "pay_quote",
+      "get_payment",
+      "suggest_add_on",
     ]) {
       expect(yaml).toContain(`operationId: ${op}`);
     }

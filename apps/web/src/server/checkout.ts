@@ -3,6 +3,8 @@ import { checkAgainstIntent } from "@countersign/mandates";
 import { getQuote, updateQuote } from "@countersign/quotes";
 import { appendOrder } from "@countersign/orders";
 import { createPaymentLink } from "@countersign/razorpay";
+
+import { planPaymentLink } from "@/server/link-amount";
 import { Wallet } from "@countersign/vault";
 
 import { lookupMandate } from "@/server/mandates";
@@ -131,10 +133,37 @@ export async function issueLinkForQuote(input: {
 
   // --- the link -----------------------------------------------------------
 
+  /**
+   * What the link is raised for, and which offer is pinned to it.
+   *
+   * The link used to be raised for `legal_total_paise` — the price the kernel
+   * had already discounted — with no offers named. Razorpay then attached every
+   * ladder offer whose minimum cart that total cleared and applied the largest
+   * at capture, so a basket the kernel had settled at 20% off was captured at a
+   * further 15% off. The store was billing less than it had decided to.
+   *
+   * The honest shape is the one a shopper expects: the link carries the
+   * pre-coupon basket, and the coupon is the coupon, applied by Razorpay and
+   * struck through on its own page. Two branches, and both land on exactly
+   * `legal_total_paise`:
+   *
+   *   - the kernel granted a rung whose plain percentage reproduces its own
+   *     arithmetic, so the link carries the subtotal and pins that one rung;
+   *
+   *   - otherwise the link carries the settled total and pins *nothing*, with
+   *     `force_offer` still set, because an empty forced list is what stops
+   *     Razorpay helping itself to an offer we did not choose.
+   *
+   * The second branch exists because a ladder rung also has a rupee cap. When
+   * that cap binds, the kernel's discount is smaller than the flat percentage,
+   * and no percentage offer can reproduce it — so we do not pretend one can.
+   */
+  const plan = planPaymentLink(quote);
+
   const link = await createPaymentLink(
     { keyId, keySecret },
     {
-      amount_paise: quote.legal_total_paise,
+      amount_paise: plan.amount_paise,
       description: `Order ${quote.quote_id}`,
       reference_id: `${quote.quote_id}-${Date.now().toString(36)}`,
       notes: {
@@ -142,6 +171,7 @@ export async function issueLinkForQuote(input: {
         quote_id: quote.quote_id,
         order_id: order.id,
       },
+      offer_ids: plan.offer_ids,
     },
   );
 

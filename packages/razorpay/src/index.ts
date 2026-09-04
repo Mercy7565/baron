@@ -206,6 +206,17 @@ export async function createPaymentLink(
     description: string;
     reference_id: string;
     notes: Record<string, string>;
+    /**
+     * The offers to pin onto the order this link creates.
+     *
+     * Always sent, and an empty array is meaningful rather than a no-op. Left
+     * to itself Razorpay attaches every offer whose minimum cart the amount
+     * clears and applies the largest — which is how a link raised for an
+     * already-discounted total came back discounted a second time. Sending
+     * `force_offer` with exactly the rung the kernel chose, or with nothing at
+     * all, is what makes the captured amount predictable.
+     */
+    offer_ids: string[];
   },
 ): Promise<RazorpayResult<PaymentLink>> {
   const body = {
@@ -216,6 +227,9 @@ export async function createPaymentLink(
     notes: input.notes,
     notify: { sms: false, email: false },
     reminder_enable: false,
+    // `options.order` is passed through to the order the link creates. This is
+    // the only place that order can be reached before it exists.
+    options: { order: { offers: input.offer_ids, force_offer: true } },
   };
 
   let status = 0;
