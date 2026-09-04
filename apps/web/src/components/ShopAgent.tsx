@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from "react";
 
+import { KeyRound, Send } from "lucide-react";
+
+import { NO_SHOP_REPLY } from "@/lib/agent-copy";
+
+import { ShopCodeForm } from "./ShopCodeForm";
 import { EvidenceTree, type EvidenceStep } from "./EvidenceTree";
 import { UpsellModal, type Suggestion } from "./UpsellModal";
 
@@ -55,12 +60,31 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
   const [lastIntent, setLastIntent] = useState<string | null>(null);
   const [steps, setSteps] = useState<EvidenceStep[]>([]);
   const [raw, setRaw] = useState<unknown[]>([]);
+  /**
+   * Which shop this browser is in. `null` while we are still asking.
+   *
+   * The cookie is httpOnly, so the assistant cannot read the flag it is gated
+   * on — it has to be told. Until it knows, it shows nothing rather than
+   * guessing, because guessing here means an input box that looks live and is
+   * not.
+   */
+  const [shop, setShop] = useState<{ unlocked: boolean; code: string | null } | null>(null);
 
   useEffect(() => {
+    void fetch("/api/shop/code")
+      .then((r) => r.json())
+      .then((d: { unlocked?: boolean; code?: string | null }) =>
+        setShop({ unlocked: d.unlocked === true, code: d.code ?? null }),
+      )
+      .catch(() => setShop({ unlocked: false, code: null }));
+  }, []);
+
+  useEffect(() => {
+    if (shop?.unlocked !== true) return;
     void fetch("/api/mandates/demo", { method: "POST" })
       .then((r) => r.json())
       .then((d: { mandate_hash: string }) => setMandate(d.mandate_hash));
-  }, []);
+  }, [shop?.unlocked]);
 
   const say = (role: Line["role"], text: string): void => {
     setLines((l) => [...l, { role, text }]);
@@ -195,6 +219,15 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
 
   async function handle(text: string): Promise<void> {
     if (text.trim() === "" || busy) return;
+
+    // Blind: say so and stop. No search, no add, no suggestion, no quote — and
+    // above all no product name, because naming one would mean inventing it.
+    if (shop?.unlocked !== true) {
+      say("you", text);
+      say("agent", NO_SHOP_REPLY);
+      return;
+    }
+
     setBusy(true);
     say("you", text);
     setInput("");
@@ -212,6 +245,16 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
         // endpoint applies a confidence bar and returns nothing when nothing
         // really matches.
         const sr = await fetch(`/api/agent/resolve?q=${encodeURIComponent(query)}`);
+
+        // The shop was left in another tab while this one was open. Say the
+        // real reason and go blind, rather than reporting "not found" — the
+        // product may well exist; we simply have no shop to look in.
+        if (sr.status === 403) {
+          say("agent", NO_SHOP_REPLY);
+          setShop({ unlocked: false, code: null });
+          return;
+        }
+
         const sd = (await sr.json()) as { match: { id: string; title: string } | null };
         const hit = sd.match ?? undefined;
         setRaw((e) => [...e, { step: "resolve", query, match: sd.match }]);
@@ -361,6 +404,30 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
     });
   }
 
+  // Still asking which shop we are in. An input that looks live but is not is
+  // worse than a blank space for the half-second this takes.
+  if (shop === null) {
+    return <div className="ag-panel ag-waiting" aria-busy="true" />;
+  }
+
+  /**
+   * Blind.
+   *
+   * A composed screen, not an error: nothing has gone wrong, the shopper simply
+   * has not said which shop they are in. So it reads as a door — one sentence,
+   * one field — rather than as a failure the shopper has to decode.
+   */
+  if (!shop.unlocked) {
+    return (
+      <div className="ag-panel ag-blind">
+        <KeyRound size={22} strokeWidth={1.75} aria-hidden />
+        <h2>No shop selected</h2>
+        <p className="st-muted">{NO_SHOP_REPLY}</p>
+        <ShopCodeForm />
+      </div>
+    );
+  }
+
   return (
     <>
       {suggestion !== null && (
@@ -372,23 +439,30 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
         />
       )}
 
-      <div className="nl-panel cs-stack">
-        <div className="cs-row" style={{ flexWrap: "wrap" }}>
+      <div className="ag-panel">
+        <div className="ag-chips">
           {["buy me the niacinamide", "buy me the invisible sunscreen"].map((s) => (
-            <button
-              key={s}
-              className="nl-btn nl-btn--ghost"
-              style={{ fontSize: 13, padding: "6px 14px" }}
-              disabled={busy}
-              onClick={() => void handle(s)}
-            >
+            <button key={s} className="ag-chip" disabled={busy} onClick={() => void handle(s)}>
               {s}
             </button>
           ))}
         </div>
 
+        {/* Three voices, three shapes: what you said, what the store answered,
+            and the machine notes underneath. Quiet, but never ambiguous. */}
+        <div className="ag-log" role="log" aria-label="agent transcript">
+          {lines.map((l, i) => (
+            <div className="ag-turn" key={i} data-role={l.role}>
+              <span className="ag-who">
+                {l.role === "you" ? "You" : l.role === "agent" ? "Store" : "Tool"}
+              </span>
+              <span className="ag-said">{l.text}</span>
+            </div>
+          ))}
+        </div>
+
         <form
-          className="cs-row"
+          className="ag-compose"
           onSubmit={(e) => {
             e.preventDefault();
             void handle(input);
@@ -397,73 +471,47 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="tell the agent what you want"
-            style={{
-              flex: 1,
-              font: "inherit",
-              padding: "10px 12px",
-              border: "1px solid var(--line)",
-              borderRadius: "var(--radius)",
-            }}
+            aria-label="Tell the assistant what you want"
+            placeholder={`Shopping ${shop.code ?? ""} — tell the assistant what you want`}
           />
-          <button className="nl-btn" disabled={busy} type="submit">
-            {busy ? "…" : "Send"}
+          <button className="st-btn ag-send" disabled={busy} type="submit" title="Send">
+            <Send size={18} strokeWidth={2} aria-hidden />
+            <span>{busy ? "…" : "Send"}</span>
           </button>
         </form>
 
-        <div className="cs-stack" role="log" aria-label="agent transcript" style={{ gap: 6 }}>
-          {lines.map((l, i) => (
-            <div key={i} data-role={l.role} style={{ fontSize: 15 }}>
-              <span className="nl-sub" style={{ minWidth: 62, display: "inline-block" }}>
-                {l.role === "you" ? "You" : l.role === "agent" ? "Store" : ""}
-              </span>
-              <span className={l.role === "system" ? "mono nl-sub" : undefined}>{l.text}</span>
-            </div>
-          ))}
-        </div>
-
         {quote !== null && paid === null && (
-          <div className="nl-note cs-stack">
-            <div className="cs-row" style={{ justifyContent: "space-between", flexWrap: "wrap" }}>
-              <strong style={{ fontSize: 17 }}>{rupees(quote.legal_total_paise)} to pay</strong>
-              <span className="nl-sub">
+          <div className="st-note ag-settle">
+            <div className="ag-settle-head">
+              <strong className="nl-money">{rupees(quote.legal_total_paise)} to pay</strong>
+              <span className="st-muted">
                 {quote.applied_bps === 0
                   ? "No coupon applies to this basket."
                   : `${quote.applied_bps / 100}% coupon allowed${quote.offer_id === null ? "" : ` · ${quote.offer_id}`}`}
               </span>
             </div>
 
-            <button
-              className="nl-btn"
-              disabled={busy}
-              style={{ alignSelf: "start" }}
-              onClick={() => void finish(quote)}
-            >
+            <button className="st-btn" disabled={busy} onClick={() => void finish(quote)}>
               {busy ? "Generating…" : issueFailed ? "Try again" : "Generate payment link"}
             </button>
-
-            <p className="nl-sub" style={{ margin: 0, fontStyle: "italic" }}>
-              When server-to-server card charge is enabled on this account, the agent will pay with
-              the saved card. You will not need to generate a link or pay on Razorpay yourself.
-            </p>
           </div>
         )}
 
         {paid !== null && (
-          <div className="nl-note cs-stack">
+          <div className="st-note ag-settle">
             <strong>Payment link ready.</strong>
             {typeof paid.short_url === "string" && (
               <a href={paid.short_url} target="_blank" rel="noreferrer" className="mono">
                 {paid.short_url}
               </a>
             )}
-            <span className="nl-sub">
+            <span className="st-muted">
               {typeof paid.legal_total_paise === "number"
                 ? rupees(paid.legal_total_paise)
                 : ""}{" "}
               · pay on Razorpay, or use <a href="/gate">/gate</a>. The agent never sees the card.
             </span>
-            <a className="nl-btn nl-btn--ghost" href="/orders" style={{ alignSelf: "start" }}>
+            <a className="st-btn st-btn--quiet ag-selfstart" href="/orders">
               View order
             </a>
           </div>

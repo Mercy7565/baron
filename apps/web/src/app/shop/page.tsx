@@ -19,14 +19,12 @@ export default async function ShopPage() {
   if (tenant === null) {
     return (
       <StoreChrome>
-        <section style={{ padding: "56px 0 8px" }}>
-          <h1 style={{ fontSize: 34 }}>Shop</h1>
-          <p className="judge-note">
-            Baron is a platform. A merchant loads a catalog and gets a shop code; a shopper enters
-            that code to see it. The grid below is the agent-readable catalog the assistant and any
-            outside agent read from — one source of price, stock and margin.
-          </p>
-        </section>
+        <h1>Shop</h1>
+        <p className="judge-note">
+          Baron is a platform. A merchant loads a catalog and gets a shop code; a shopper enters
+          that code to see it. Until then there is no grid, and the assistant is blind — it will
+          not search, add, suggest, quote or pay for a shop it cannot see.
+        </p>
         <ShopCodeGate />
       </StoreChrome>
     );
@@ -35,8 +33,8 @@ export default async function ShopPage() {
   return (
     <StoreChrome>
       <ExitShop code={code ?? ""} />
-      <h1 style={{ fontSize: 34 }}>The shop</h1>
-      <p className="nl-sub" style={{ marginBottom: "var(--space-3)" }}>
+      <h1>The shop</h1>
+      <p className="st-lede">
         The shop is one module on the control plane. Agent-readable at{" "}
         <a href="/catalog.json">/catalog.json</a>.
       </p>
@@ -48,9 +46,9 @@ export default async function ShopPage() {
       </section>
 
       {rest.length > 0 && (
-        <section style={{ marginTop: "var(--space-4)" }}>
-          <h2 style={{ fontFamily: "var(--serif)", fontWeight: 500 }}>Not available right now</h2>
-          <p className="nl-sub" style={{ marginBottom: "var(--space-3)" }}>
+        <section style={{ marginTop: 44 }}>
+          <h2>Not available right now</h2>
+          <p className="st-muted" style={{ marginBottom: 20 }}>
             Listed for completeness. These are refused at the money path, not hidden from the feed.
           </p>
           <div className="nl-grid">

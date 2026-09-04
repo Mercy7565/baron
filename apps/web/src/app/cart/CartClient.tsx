@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { ShoppingBag } from "lucide-react";
+
 import { Price } from "@/components/Price";
 import { ShopAgent } from "@/components/ShopAgent";
 
@@ -179,12 +181,10 @@ export function CartClient() {
 
   if (cart.lines.length === 0) {
     return (
-      <div className="st-card" style={{ textAlign: "center", padding: 44 }}>
-        <p style={{ margin: "0 0 6px", fontSize: 17 }}>Your basket is empty.</p>
-        <p className="st-muted" style={{ margin: "0 0 20px" }}>
-          Add something from the shop, or ask the assistant for it.
-        </p>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+      <div className="st-empty">
+        <ShoppingBag size={26} strokeWidth={1.5} aria-hidden />
+        <p>Your basket is empty. Add something from the shop, or ask the assistant for it.</p>
+        <div className="st-actions">
           <a className="st-btn" href="/shop">
             Browse the shop
           </a>

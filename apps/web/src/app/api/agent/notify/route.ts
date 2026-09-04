@@ -1,4 +1,5 @@
 import { DEMO_CART_ID, payableLines } from "@/server/cart";
+import { requireShopCode } from "@/server/shop-code";
 import { suggestForCart } from "@/server/suggest";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,9 @@ export const runtime = "nodejs";
  * adds nothing to the basket — the shopper accepts or rejects first.
  */
 export async function POST(request: Request): Promise<Response> {
+  const blind = await requireShopCode();
+  if (blind !== null) return blind;
+
   let body: { cart_id?: string } = {};
   try {
     body = (await request.json()) as { cart_id?: string };

@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { NO_SHOP_REPLY } from "@/lib/agent-copy";
 import { CATALOG } from "@/lib/catalog";
 import { DEFAULT_TENANT } from "@/server/users";
 
@@ -61,4 +62,31 @@ export async function enteredCode(): Promise<string | null> {
   // Only report a code that still resolves: a retired one is not where the
   // shopper is, it is a stale cookie.
   return code !== null && tenantForCode(code) !== null ? normaliseCode(code) : null;
+}
+
+/**
+ * Gate for the assistant's own routes.
+ *
+ * Returns a refusal Response when this browser holds no valid shop code, and
+ * null when it does. The check is the cookie, which is the same flag Exit shop
+ * clears, so leaving a shop blinds the agent in the same breath as hiding the
+ * catalog.
+ */
+export async function requireShopCode(): Promise<Response | null> {
+  if ((await unlockedTenant()) !== null) return null;
+  return Response.json(
+    {
+      error: "no_shop_code",
+      message: NO_SHOP_REPLY,
+      // Shaped so a caller that only reads results still reads *empty* results
+      // rather than undefined ones. A blind agent returns nothing, not junk.
+      match: null,
+      matches: [],
+      results: [],
+      suggestion: null,
+      suggestions: [],
+      steps: [],
+    },
+    { status: 403 },
+  );
 }

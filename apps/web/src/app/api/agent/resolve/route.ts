@@ -1,3 +1,4 @@
+import { requireShopCode } from "@/server/shop-code";
 import { resolveSku } from "@/server/tools";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,11 @@ export const runtime = "nodejs";
  * applies a confidence bar instead: no confident match, no product.
  */
 export async function GET(request: Request): Promise<Response> {
+  // No shop code, no catalog. The assistant is scoped to one merchant, so
+  // outside a shop there is nothing it is entitled to look at.
+  const blind = await requireShopCode();
+  if (blind !== null) return blind;
+
   const q = new URL(request.url).searchParams.get("q") ?? "";
   if (q.trim() === "") return Response.json({ match: null });
 

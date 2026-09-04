@@ -9,6 +9,7 @@ import {
   suggest_upsell,
 } from "@/server/tools";
 import { DEMO_CART_ID } from "@/server/cart";
+import { requireShopCode } from "@/server/shop-code";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -63,6 +64,11 @@ function wants(text: string, ...words: string[]): boolean {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  // Every branch below this line searches, adds, suggests or proposes money.
+  // None of them may run for a browser that has not named a shop.
+  const blind = await requireShopCode();
+  if (blind !== null) return blind;
+
   let payload: { message?: string; cart_id?: string; mandate_hash?: string | null };
   try {
     payload = (await request.json()) as {

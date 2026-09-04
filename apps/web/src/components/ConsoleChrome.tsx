@@ -1,14 +1,22 @@
 import type { ReactNode } from "react";
+import {
+  LayoutDashboard,
+  Megaphone,
+  Package,
+  ScrollText,
+  Tag,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Logo } from "./Logo";
 import { LogoutButton } from "./LogoutButton";
 
-const NAV: Array<[string, string]> = [
-  ["/merchant", "Overview"],
-  ["/merchant/orders", "Orders"],
-  ["/merchant/catalog", "Catalog"],
-  ["/merchant/campaigns", "Campaigns"],
-  ["/merchant/audit", "Audit"],
+const NAV: Array<[string, string, LucideIcon]> = [
+  ["/merchant", "Overview", LayoutDashboard],
+  ["/merchant/orders", "Orders", Package],
+  ["/merchant/catalog", "Catalog", Tag],
+  ["/merchant/campaigns", "Campaigns", Megaphone],
+  ["/merchant/audit", "Audit", ScrollText],
 ];
 
 /** The merchant surface: dark rail, dense type, tables and meters. */
@@ -21,14 +29,18 @@ export function ConsoleChrome({ current, children }: { current: string; children
             <Logo href="/merchant" height={22} />
           </div>
           <div className="tag">Merchant console</div>
-          {NAV.map(([href, label]) => (
+          {/* The rail keeps its words: a merchant lives here all day and a
+              five-item sidebar has the room. The icons are a spine to scan
+              down, not a replacement for the label. */}
+          {NAV.map(([href, label, Icon]) => (
             <a
               key={href}
               className="item"
               href={href}
               aria-current={current === href ? "page" : undefined}
             >
-              {label}
+              <Icon size={17} strokeWidth={1.75} aria-hidden />
+              <span>{label}</span>
             </a>
           ))}
           <div className="foot">

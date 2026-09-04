@@ -1,6 +1,8 @@
 import { explainOrder, paidOrdersFor, unpaidOrdersFor } from "@countersign/orders";
 import { allQuotes } from "@countersign/quotes";
 
+import { Package } from "lucide-react";
+
 import { StoreChrome } from "@/components/StoreChrome";
 import { buyerId } from "@/server/require-role";
 
@@ -63,13 +65,15 @@ export default async function OrdersPage({
 
   return (
     <StoreChrome>
-      <section style={{ padding: "56px 0 24px" }}>
-        <h1 style={{ fontSize: 38 }}>Your orders</h1>
-        <p className="st-lede">
-          An order appears under Paid once Razorpay confirms the payment — not when the link is
-          created.
-        </p>
-      </section>
+      <h1>Your orders</h1>
+      <p className="st-lede">
+        An order appears under Paid once Razorpay confirms the payment — not when the link is
+        created.
+      </p>
+      <p className="judge-note">
+        Paid means Razorpay said so. An issued link is a request for money, never a receipt, so it
+        stays on the Unpaid tab until a webhook confirms it.
+      </p>
 
       <div className="st-tabs">
         <a className={showing === "paid" ? "st-tab is-on" : "st-tab"} href="/orders?tab=paid">
@@ -97,16 +101,16 @@ export default async function OrdersPage({
           }))}
         />
       ) : paid.length === 0 ? (
-        <div className="st-card" style={{ textAlign: "center", padding: 44 }}>
-          <p style={{ margin: "0 0 6px", fontSize: 17 }}>Nothing paid for yet.</p>
-          <p className="st-muted" style={{ margin: "0 0 20px" }}>
+        <div className="st-empty">
+          <Package size={26} strokeWidth={1.5} aria-hidden />
+          <p>
             {unpaidRows.length > 0
-              ? `You have ${unpaidRows.length} payment link${unpaidRows.length === 1 ? "" : "s"} waiting. Pay one on Razorpay, then check again.`
-              : "Ask the agent for something and it will hand you a payment link."}
+              ? `Nothing paid for yet. You have ${unpaidRows.length} payment link${unpaidRows.length === 1 ? "" : "s"} waiting — pay one on Razorpay, then check again.`
+              : "Nothing paid for yet. Ask the assistant for something and it will price it for you."}
           </p>
-          <div style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
+          <div className="st-actions">
             <a className="st-btn" href="/agent">
-              Talk to the agent
+              Talk to the assistant
             </a>
             {unpaidRows.length > 0 && (
               <a className="st-btn st-btn--quiet" href="/orders?tab=unpaid">

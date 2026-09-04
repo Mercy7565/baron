@@ -61,29 +61,19 @@ export function WalletClient({
     }
   }
 
-  const field: React.CSSProperties = {
-    font: "inherit",
-    padding: "10px 12px",
-    border: "1px solid var(--line)",
-    borderRadius: "var(--radius)",
-    width: "100%",
-  };
-
   if (card !== null) {
     return (
-      <div className="nl-panel cs-stack" style={{ marginTop: "var(--space-3)" }}>
-        <div style={{ fontSize: 24, letterSpacing: "0.08em" }}>{card.display}</div>
-        <div className="nl-sub">{card.brand} · vaulted, not charged</div>
-        <div className="st-note cs-stack" style={{ gap: 8 }}>
-          <span>{truth}</span>
-          <span className="st-muted" style={{ fontSize: 13 }}>
+      <div className="st-card wl-card">
+        <div className="wl-pan mono">{card.display}</div>
+        <div className="st-muted">{card.brand} · vaulted, not charged</div>
+        <div className="st-note">
+          <p style={{ margin: 0 }}>{truth}</p>
+          <p className="st-muted" style={{ margin: "6px 0 0" }}>
             {fine}
-          </span>
+          </p>
         </div>
-        <p className="nl-sub" style={{ margin: 0, fontStyle: "italic", lineHeight: 1.55 }}>
-          {WALLET_JUDGE_NOTE}
-        </p>
-        <a className="nl-btn nl-btn--ghost" href="/cart" style={{ alignSelf: "start" }}>
+        <p className="judge-note">{WALLET_JUDGE_NOTE}</p>
+        <a className="st-btn st-btn--quiet ag-selfstart" href="/shop">
           Go shopping
         </a>
       </div>
@@ -92,53 +82,47 @@ export function WalletClient({
 
   return (
     <form
-      className="nl-panel cs-stack"
-      style={{ marginTop: "var(--space-3)" }}
+      className="st-card st-form"
       onSubmit={(e) => {
         e.preventDefault();
         void save();
       }}
     >
-      <label className="cs-stack" style={{ gap: 4 }}>
-        <span className="nl-sub">Card number</span>
+      <label className="st-field st-field--wide">
+        <span className="st-label">Card number</span>
         <input
-          style={field}
           value={pan}
           onChange={(e) => setPan(e.target.value)}
-          placeholder="card number"
+          placeholder="4111 1111 1111 1111"
           inputMode="numeric"
           autoComplete="off"
         />
       </label>
 
-      <div className="cs-row" style={{ gap: "var(--space)" }}>
-        <label className="cs-stack" style={{ gap: 4, flex: 1 }}>
-          <span className="nl-sub">Expiry</span>
-          <input
-            style={field}
-            value={expiry}
-            onChange={(e) => setExpiry(e.target.value)}
-            placeholder="12/30"
-            autoComplete="off"
-          />
-        </label>
-        <label className="cs-stack" style={{ gap: 4, flex: 1 }}>
-          <span className="nl-sub">CVV</span>
-          <input
-            style={field}
-            value={cvv}
-            onChange={(e) => setCvv(e.target.value)}
-            placeholder="123"
-            inputMode="numeric"
-            autoComplete="off"
-          />
-        </label>
-      </div>
-
-      <label className="cs-stack" style={{ gap: 4 }}>
-        <span className="nl-sub">Name on card</span>
+      <label className="st-field">
+        <span className="st-label">Expiry</span>
         <input
-          style={field}
+          value={expiry}
+          onChange={(e) => setExpiry(e.target.value)}
+          placeholder="12/30"
+          autoComplete="off"
+        />
+      </label>
+
+      <label className="st-field">
+        <span className="st-label">CVV</span>
+        <input
+          value={cvv}
+          onChange={(e) => setCvv(e.target.value)}
+          placeholder="123"
+          inputMode="numeric"
+          autoComplete="off"
+        />
+      </label>
+
+      <label className="st-field st-field--wide">
+        <span className="st-label">Name on card</span>
+        <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="A Shopper"
@@ -146,13 +130,20 @@ export function WalletClient({
         />
       </label>
 
-      {error !== null && <div className="nl-note" style={{ color: "var(--danger)" }}>{error}</div>}
+      {/* The error belongs under the fields it is about, not above them. */}
+      {error !== null && (
+        <p className="st-fielderror st-field--wide" role="alert">
+          {error}
+        </p>
+      )}
 
-      <button className="nl-btn" disabled={busy} type="submit" style={{ alignSelf: "start" }}>
-        {busy ? "Saving…" : "Save card"}
-      </button>
+      <div className="st-field--wide">
+        <button className="st-btn" disabled={busy} type="submit">
+          {busy ? "Saving…" : "Save card"}
+        </button>
+      </div>
 
-      <p className="nl-sub" style={{ margin: 0 }}>
+      <p className="st-muted st-field--wide" style={{ margin: 0 }}>
         Demo only, Razorpay test mode — use {testCard}. The number and CVV are discarded the
         moment they arrive; only the last four digits, the brand and a token id are kept.
       </p>

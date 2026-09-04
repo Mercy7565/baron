@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 
 import { requireRole } from "@/server/require-role";
-import { SHOP_CODE_COOKIE, normaliseCode, tenantForCode } from "@/server/shop-code";
+import { SHOP_CODE_COOKIE, enteredCode, normaliseCode, tenantForCode } from "@/server/shop-code";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -41,6 +41,18 @@ export async function POST(request: Request): Promise<Response> {
   });
 
   return Response.json({ ok: true, code, tenant_id: tenant });
+}
+
+/**
+ * GET — which shop, if any, this browser is standing in.
+ *
+ * The assistant asks this before it will do anything, because it renders on
+ * more than one page and the cookie is httpOnly: the client cannot read the
+ * flag it is gated on, so it has to be told.
+ */
+export async function GET(): Promise<Response> {
+  const code = await enteredCode();
+  return Response.json({ unlocked: code !== null, code });
 }
 
 /** DELETE — leave the shop, so the code gate can be demonstrated twice. */

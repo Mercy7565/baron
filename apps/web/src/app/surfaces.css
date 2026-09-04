@@ -1086,3 +1086,405 @@
   border: 1px solid var(--nl-ink); border-radius: 10px;
   font-size: 14px;
 }
+
+/* ==========================================================================
+   UI PASS
+   Icon navigation, one type scale, and the small shared parts (fields, empty
+   states, tooltips) that were previously inline styles on individual pages.
+   Nothing here introduces a colour: the five hexes above still fill everything.
+   ========================================================================== */
+
+/* ---- type scale ---------------------------------------------------------
+   One display face and one body face, named once. `--ui` is the body;
+   `--display` is the serif already used by the stage and the product cards.
+   The sizes below are the only sizes: page title, section, body, helper. */
+:root {
+  --display: ui-serif, Georgia, "Iowan Old Style", "Times New Roman", serif;
+
+  --t-page: clamp(30px, 4vw, 40px);
+  --t-section: 21px;
+  --t-body: 15.5px;
+  --t-helper: 13.5px;
+}
+
+/* Consistent page width and padding on every customer screen, so the shop, the
+   basket and the assistant do not each start at a different left edge. */
+[data-surface="store"] .st-page {
+  display: block;
+  padding: 34px 0 0;
+}
+[data-surface="store"] .st-page > h1:first-child { margin-top: 0; }
+
+[data-surface="store"] h1 { font-size: var(--t-page); }
+[data-surface="store"] h2 { font-size: var(--t-section); margin: 0 0 10px; }
+[data-surface="store"] p { font-size: var(--t-body); }
+[data-surface="store"] .st-muted { font-size: var(--t-helper); }
+[data-surface="store"] .st-lede { font-size: 17px; }
+
+/* ---- icon navigation ---------------------------------------------------- */
+[data-surface="store"] .st-icons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+[data-surface="store"] .st-navicon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--nl-mint);
+  cursor: pointer;
+  text-decoration: none;
+  padding: 0;
+}
+[data-surface="store"] .st-navicon:hover {
+  color: var(--nl-amber);
+  border-color: var(--nl-green);
+}
+[data-surface="store"] .st-navicon:focus-visible {
+  outline: 2px solid var(--nl-amber);
+  outline-offset: 2px;
+}
+[data-surface="store"] .st-navicon:disabled { opacity: 0.5; cursor: default; }
+
+/* Active route: a quiet underline in green, drawn inside the button so the row
+   does not shift. Not a pill, not a fill. */
+[data-surface="store"] .st-navicon[aria-current="page"] {
+  color: var(--on-dark);
+}
+[data-surface="store"] .st-navicon[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  left: 9px;
+  right: 9px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--nl-green);
+}
+
+/* The bag count. Green on the ink bar, a pairing the colour lock allows. */
+[data-surface="store"] .st-navbadge {
+  position: absolute;
+  top: 2px;
+  right: 1px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--nl-green);
+  color: var(--on-dark);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 17px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The tooltip. `title` already covers the browser default; this is the same
+   word, on brand, without the half-second wait. */
+[data-surface="store"] .st-tip {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  background: var(--nl-mint);
+  color: var(--nl-ink);
+  border: 1px solid var(--nl-ink);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 12px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 60;
+}
+[data-surface="store"] .st-navicon:hover .st-tip,
+[data-surface="store"] .st-navicon:focus-visible .st-tip { opacity: 1; }
+
+/* ---- console rail, now with a spine ------------------------------------- */
+[data-surface="console"] .mc-rail a.item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+[data-surface="console"] .mc-rail a.item svg { flex: none; opacity: 0.85; }
+[data-surface="console"] .mc-rail a.item[aria-current="page"] svg { opacity: 1; }
+
+/* ---- forms: label above, focus ring, error under ------------------------ */
+[data-surface="store"] .st-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  margin-bottom: 6px;
+}
+[data-surface="store"] input:focus-visible,
+[data-surface="store"] textarea:focus-visible,
+[data-surface="store"] select:focus-visible {
+  outline: 2px solid var(--nl-green);
+  outline-offset: 1px;
+}
+[data-surface="store"] input[aria-invalid="true"] { border-color: var(--nl-rust); }
+[data-surface="store"] .st-fielderror {
+  margin: 7px 0 0;
+  font-size: 13px;
+  color: var(--nl-rust);
+}
+[data-surface="store"] .sc-field { text-align: left; }
+
+/* ---- product card: lift on hover, nothing else -------------------------- */
+.nl-card {
+  border-radius: 12px;
+  padding: 10px;
+  margin: -10px;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.nl-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 22px rgba(36, 53, 44, 0.16);
+}
+.nl-card:focus-visible {
+  outline: 2px solid var(--nl-green);
+  outline-offset: 2px;
+}
+
+/* ---- empty states: one sentence, one action ----------------------------- */
+[data-surface="store"] .st-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  border: 1px dashed var(--nl-ink);
+  border-radius: 12px;
+  padding: 40px 24px;
+  margin: 24px 0;
+}
+[data-surface="store"] .st-empty p { margin: 0; max-width: 44ch; }
+
+/* ---- the gate card ------------------------------------------------------ */
+[data-surface="store"] .sc-gate {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+  align-items: center;
+}
+[data-surface="store"] .sc-gate h2 { margin: 0; }
+[data-surface="store"] .sc-gate p { margin: 0; max-width: 46ch; font-size: var(--t-body); opacity: 0.82; }
+[data-surface="store"] .sc-gate .sc-field { width: 100%; max-width: 340px; }
+[data-surface="store"] .sc-row { margin: 0; }
+
+/* ---- the assistant ------------------------------------------------------ */
+[data-surface="store"] .ag-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border: 1px solid var(--nl-ink);
+  border-radius: 14px;
+  padding: 20px;
+}
+[data-surface="store"] .ag-waiting { min-height: 190px; border-style: dashed; opacity: 0.35; }
+
+/* Blind: a composed screen, not a red dump. Same furniture as the shop gate. */
+[data-surface="store"] .ag-blind {
+  align-items: center;
+  text-align: center;
+  padding: 44px 24px;
+}
+[data-surface="store"] .ag-blind h2 { margin: 0; }
+[data-surface="store"] .ag-blind p {
+  margin: 0;
+  max-width: 46ch;
+  font-size: var(--t-body);
+  opacity: 0.82;
+}
+[data-surface="store"] .ag-blind .sc-field { width: 100%; max-width: 340px; }
+
+[data-surface="store"] .ag-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+[data-surface="store"] .ag-chip {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--nl-ink);
+  background: var(--nl-mint);
+  color: var(--nl-ink);
+  cursor: pointer;
+}
+[data-surface="store"] .ag-chip:hover { background: var(--nl-amber); }
+[data-surface="store"] .ag-chip:disabled { opacity: 0.5; cursor: default; }
+
+/* Three voices. You are marked in ink, the store in green, a tool note in
+   amber and monospace. Quiet, but never ambiguous. */
+[data-surface="store"] .ag-log { display: flex; flex-direction: column; gap: 10px; }
+[data-surface="store"] .ag-log:empty { display: none; }
+[data-surface="store"] .ag-turn {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 12px;
+  align-items: baseline;
+  font-size: var(--t-body);
+  line-height: 1.55;
+  padding-left: 11px;
+  border-left: 2px solid transparent;
+}
+[data-surface="store"] .ag-who {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.62;
+}
+[data-surface="store"] .ag-turn[data-role="you"] { border-left-color: var(--nl-ink); }
+[data-surface="store"] .ag-turn[data-role="agent"] { border-left-color: var(--nl-green); }
+[data-surface="store"] .ag-turn[data-role="system"] { border-left-color: var(--nl-amber); }
+[data-surface="store"] .ag-turn[data-role="system"] .ag-said {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  opacity: 0.72;
+}
+
+[data-surface="store"] .ag-compose { display: flex; gap: 10px; }
+[data-surface="store"] .ag-compose input {
+  flex: 1;
+  font: inherit;
+  font-size: var(--t-body);
+  padding: 11px 13px;
+  border-radius: 10px;
+}
+[data-surface="store"] .ag-send {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+}
+
+[data-surface="store"] .ag-settle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+[data-surface="store"] .ag-settle-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+[data-surface="store"] .ag-settle-head strong { font-size: 18px; }
+[data-surface="store"] .ag-selfstart { align-self: flex-start; }
+
+/* The shop bar keeps its icon and its name; the way out is in the nav. */
+[data-surface="store"] .sc-bar { justify-content: flex-start; gap: 9px; }
+
+/* ---- tables: a readable first column, aligned chips --------------------- */
+[data-surface="console"] table.mc-table td:first-child,
+[data-surface="console"] table.mc-table th:first-child {
+  font-size: 13.5px;
+  line-height: 1.45;
+  max-width: 260px;
+}
+[data-surface="console"] table.mc-table .mc-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 66px;
+  vertical-align: middle;
+}
+
+/* ---- action rows: primary first, quiet after ---------------------------- */
+[data-surface="store"] .st-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+[data-surface="store"] .st-empty .st-actions { justify-content: center; }
+
+/* ---- store forms: two columns, labels above, errors under --------------- */
+[data-surface="store"] .st-form {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  margin-top: 22px;
+}
+[data-surface="store"] .st-field { display: block; }
+[data-surface="store"] .st-field--wide { grid-column: 1 / -1; }
+[data-surface="store"] .st-form input {
+  width: 100%;
+  font: inherit;
+  font-size: var(--t-body);
+  padding: 11px 13px;
+  border-radius: 10px;
+}
+
+/* ---- the saved card ----------------------------------------------------- */
+[data-surface="store"] .wl-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 22px;
+}
+[data-surface="store"] .wl-pan {
+  font-size: 24px;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+}
+[data-surface="store"] .wl-card .st-note { width: 100%; }
+
+/* ---- the upsell ask ----------------------------------------------------- */
+.up-body { display: flex; gap: 16px; align-items: flex-start; }
+
+/* Destructive confirm. Rust, because "cancel this campaign for good" and
+   "save" should never be the same green button in the same row. */
+[data-surface="console"] .mc-btn--danger,
+[data-surface="console"] .mc-btn--danger:hover,
+[data-surface="console"] .mc-btn--danger:focus-visible,
+[data-surface="console"] .mc-btn--danger:active {
+  background: var(--nl-rust);
+  border-color: var(--nl-rust);
+  color: var(--on-dark);
+}
+[data-surface="console"] .mc-btn--danger:hover { background: var(--nl-ink); border-color: var(--nl-ink); }
+
+/* ---- two faces, one job each -------------------------------------------
+   `--display` is the serif the shop already used on its product cards; it now
+   also carries the page title, so a customer screen opens in one voice instead
+   of two. `--ui` is everything else — body, labels, tables, money. The console
+   stays entirely on `--ui`: a merchant reading forty rows wants no personality
+   at all. */
+[data-surface="store"] h1,
+[data-surface="store"] .nl-card h3,
+[data-surface="store"] .nl-pdp h1 {
+  font-family: var(--display);
+  font-weight: 550;
+  letter-spacing: -0.012em;
+}
+[data-surface="store"] h2 {
+  font-family: var(--display);
+  font-weight: 550;
+  letter-spacing: -0.008em;
+}
+/* The two headings that are labels rather than titles keep the body face —
+   a serif on "Shop code" would read as decoration. */
+[data-surface="store"] .st-label,
+[data-surface="store"] .ag-who,
+[data-surface="store"] .st-tab {
+  font-family: var(--ui);
+}
+
+/* A code chip is one token: never break it across two lines. */
+code { white-space: nowrap; }

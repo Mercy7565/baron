@@ -145,7 +145,7 @@ export function CatalogEditor({ products }: { products: Product[] }) {
                     <div className="cs-row" style={{ gap: 6, flexWrap: "nowrap" }}>
                       <span className="mc-tiny">Take off the shop?</span>
                       <button
-                        className="mc-btn"
+                        className="mc-btn mc-btn--danger"
                         disabled={saving === p.id}
                         onClick={() => void remove(p.id)}
                       >

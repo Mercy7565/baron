@@ -21,12 +21,12 @@ export function AddToCart({ skuId }: { skuId: string }) {
   }
 
   return (
-    <div className="cs-row" style={{ gap: "var(--space)" }}>
-      <button className="nl-btn" disabled={busy} onClick={() => void add()}>
+    <div className="st-actions">
+      <button className="st-btn" disabled={busy} onClick={() => void add()}>
         {busy ? "Adding…" : "Add to cart"}
       </button>
       {added && (
-        <a className="nl-btn nl-btn--ghost" href="/cart">
+        <a className="st-btn st-btn--quiet" href="/cart">
           Go to cart
         </a>
       )}

@@ -16,12 +16,12 @@ export const runtime = "nodejs";
 export default function CartPage() {
   return (
     <StoreChrome>
-      <section style={{ padding: "48px 0 8px" }}>
-        <h1 style={{ fontSize: 34 }}>Your basket</h1>
-        <p className="st-lede">
-          Your coupon is applied at checkout, based on what is in your bag.
-        </p>
-      </section>
+      <h1>Your basket</h1>
+      <p className="st-lede">Your coupon is applied at checkout, based on what is in your bag.</p>
+      <p className="judge-note">
+        The coupon is chosen by the kernel from the whole bag — the ask, the minimum cart, and the
+        merchant&rsquo;s margin floor. Nothing on this page can talk it higher.
+      </p>
       <CartClient />
     </StoreChrome>
   );

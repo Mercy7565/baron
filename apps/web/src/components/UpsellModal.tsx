@@ -38,7 +38,7 @@ export function UpsellModal({
           Save more
         </h3>
 
-        <div className="cs-row" style={{ gap: "var(--space-2)", alignItems: "flex-start" }}>
+        <div className="up-body">
           {suggestion.image !== undefined && (
             <ProductImage
               src={suggestion.image}
@@ -49,21 +49,21 @@ export function UpsellModal({
           )}
           <div>
             <p style={{ margin: "0 0 6px" }}>{suggestion.reason}</p>
-            <p className="nl-sub" style={{ margin: 0 }}>
+            <p className="st-muted" style={{ margin: 0 }}>
               {suggestion.title} · {suggestion.gift === true ? "Free" : `₹${(suggestion.price_paise / 100).toFixed(2)}`}
             </p>
           </div>
         </div>
 
-        <p className="nl-sub" style={{ marginTop: "var(--space-2)" }}>
+        <p className="st-muted" style={{ marginTop: 16 }}>
           Your coupon is worked out from your whole bag at checkout.
         </p>
 
-        <div className="cs-row" style={{ marginTop: "var(--space-2)", gap: "var(--space)" }}>
-          <button className="nl-btn" disabled={busy} onClick={onAccept}>
+        <div className="st-actions" style={{ marginTop: 16 }}>
+          <button className="st-btn" disabled={busy} onClick={onAccept}>
             Accept
           </button>
-          <button className="nl-btn nl-btn--ghost" disabled={busy} onClick={onReject}>
+          <button className="st-btn st-btn--quiet" disabled={busy} onClick={onReject}>
             No thanks
           </button>
         </div>

@@ -45,7 +45,11 @@ export function RowControls({
     return (
       <div className="cs-row" style={{ gap: 6, flexWrap: "nowrap" }}>
         <span className="mc-tiny">Cancel for good?</span>
-        <button className="mc-btn" disabled={busy} onClick={() => void send({ cancel: true })}>
+        <button
+          className="mc-btn mc-btn--danger"
+          disabled={busy}
+          onClick={() => void send({ cancel: true })}
+        >
           {busy ? "…" : "Yes"}
         </button>
         <button className="mc-btn mc-btn--quiet" disabled={busy} onClick={() => setConfirming(false)}>
