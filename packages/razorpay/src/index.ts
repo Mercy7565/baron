@@ -327,3 +327,129 @@ export async function cancelPaymentLink(
 
   return { ok: true, data: parsed as PaymentLink };
 }
+
+// --------------------------------------------------------------- listing
+//
+// Reading money back out of Razorpay, rather than out of our own log.
+//
+// The log is a cache. On a serverless host it lives in /tmp, which is per
+// instance and does not survive a cold start, so an order that was very much
+// paid can vanish from the file while the money is still sitting in the
+// Razorpay dashboard. These three list calls are the source of truth: whatever
+// Razorpay says was captured, was captured.
+
+/** One row of a Razorpay collection response. */
+interface Collection<T> {
+  items?: T[] | null;
+}
+
+export interface RazorpayPayment {
+  id: string;
+  amount: number;
+  currency: string;
+  /** "created" | "authorized" | "captured" | "refunded" | "failed" */
+  status: string;
+  order_id: string | null;
+  invoice_id: string | null;
+  method?: string | null;
+  description?: string | null;
+  email?: string | null;
+  contact?: string | null;
+  notes?: unknown;
+  created_at: number;
+}
+
+/** A Payment Link as the list endpoint returns it — richer than the create shape. */
+export interface PaymentLinkRow extends PaymentLink {
+  amount_paid?: number | null;
+  reference_id?: string | null;
+  description?: string | null;
+  notes?: unknown;
+  created_at?: number | null;
+  order_id?: string | null;
+}
+
+async function apiGet<T>(
+  creds: RazorpayCredentials,
+  path: string,
+): Promise<RazorpayResult<T>> {
+  let status = 0;
+  let parsed: unknown;
+
+  try {
+    const res = await fetch(`${API_BASE}${path}`, {
+      headers: { authorization: authHeader(creds) },
+      // Never let a stale CDN or fetch cache answer a question about money.
+      cache: "no-store",
+    });
+    status = res.status;
+    const raw = await res.text();
+    try {
+      parsed = JSON.parse(raw) as unknown;
+    } catch {
+      parsed = raw;
+    }
+    if (!res.ok) {
+      return { ok: false, status, error: describeError(parsed, status), body: parsed };
+    }
+  } catch (err) {
+    return {
+      ok: false,
+      status: 0,
+      error: err instanceof Error ? err.message : String(err),
+      body: null,
+    };
+  }
+
+  return { ok: true, data: parsed as T };
+}
+
+/**
+ * Recent payments on the account, newest first.
+ *
+ * `count` is capped at 100 by Razorpay; asking for more is a 400, not a longer
+ * list, so the cap is applied here rather than discovered in production.
+ */
+export async function listPayments(
+  creds: RazorpayCredentials,
+  count = 100,
+): Promise<RazorpayResult<RazorpayPayment[]>> {
+  const n = Math.max(1, Math.min(100, Math.trunc(count)));
+  const res = await apiGet<Collection<RazorpayPayment>>(creds, `/payments?count=${n}`);
+  return res.ok ? { ok: true, data: res.data.items ?? [] } : res;
+}
+
+/**
+ * Recent Payment Links on the account.
+ *
+ * Note the response shape: this endpoint answers with `payment_links`, not the
+ * `items` every other collection uses. Reading `items` here returns an empty
+ * list on a perfectly good response, which looks exactly like "no links".
+ */
+export async function listPaymentLinks(
+  creds: RazorpayCredentials,
+  count = 100,
+): Promise<RazorpayResult<PaymentLinkRow[]>> {
+  const n = Math.max(1, Math.min(100, Math.trunc(count)));
+  const res = await apiGet<{ payment_links?: PaymentLinkRow[] | null }>(
+    creds,
+    `/payment_links?count=${n}`,
+  );
+  return res.ok ? { ok: true, data: res.data.payment_links ?? [] } : res;
+}
+
+/**
+ * Recent orders, which is where the attached offer actually lives.
+ *
+ * A payment does not carry the offer that discounted it; the order it belongs
+ * to does. Listing orders once is cheaper than fetching one per payment, and it
+ * is the only way to show a real offer id after the local log is gone.
+ */
+export async function listOrders(
+  creds: RazorpayCredentials,
+  count = 100,
+): Promise<RazorpayResult<RazorpayOrder[]>> {
+  const n = Math.max(1, Math.min(100, Math.trunc(count)));
+  const res = await apiGet<Collection<RazorpayOrder>>(creds, `/orders?count=${n}`);
+  return res.ok ? { ok: true, data: res.data.items ?? [] } : res;
+}

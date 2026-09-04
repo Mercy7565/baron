@@ -5,6 +5,7 @@ import { burnForPaidOrder } from "@/server/burn";
 import { fetchPaymentLink } from "@countersign/razorpay";
 
 import { requireRole } from "@/server/require-role";
+import { moneyLedger } from "@/server/money-rows";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -81,13 +82,39 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ order: updated, changed: updated.status !== order.status });
   }
 
-  const pending = allOrders().filter((o) => o.status === "awaiting_payment");
+  // Flip whatever the local log still knows about. This is what charges a
+  // campaign's budget, so it stays exactly as it was.
+  let pending: Order[] = [];
+  try {
+    pending = allOrders().filter((o) => o.status === "awaiting_payment");
+  } catch {
+    // An empty or unreadable log means nothing local to flip, never a 500.
+    pending = [];
+  }
   const results = await Promise.all(pending.map((o) => refresh(o, creds)));
   const flipped = results.filter((o) => o.status === "paid");
+
+  /**
+   * Then answer from Razorpay itself.
+   *
+   * The flip above can only ever act on orders the local log still holds, and
+   * on a serverless host that log lives in /tmp — a cold start empties it while
+   * the payments stay in the Razorpay account. Reporting `checked: 0` there
+   * would tell the buyer nothing happened when four payments are sitting in the
+   * dashboard. The ledger is what the page renders, so it is what this reports.
+   */
+  const ledger = await moneyLedger();
 
   return Response.json({
     checked: pending.length,
     now_paid: flipped.length,
     orders: results,
+    // What Razorpay says, independent of whether /tmp survived.
+    razorpay: {
+      live: ledger.live,
+      error: ledger.error,
+      paid: ledger.counts.paid,
+      awaiting: ledger.counts.awaiting,
+    },
   });
 }

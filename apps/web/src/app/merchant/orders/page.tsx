@@ -1,11 +1,24 @@
-import { explainOrder, ordersByStatus } from "@countersign/orders";
-
 import { ConsoleChrome } from "@/components/ConsoleChrome";
+import { moneyLedger, type MoneyRow } from "@/server/money-rows";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 const rupees = (paise: number): string => `₹${(paise / 100).toLocaleString("en-IN")}`;
+
+/** The short "why" under a row, built only from what is still provable. */
+function why(r: MoneyRow): string {
+  const bits: string[] = [];
+  if (r.order_amount_paise !== null && r.order_amount_paise !== r.amount_paise) {
+    bits.push(
+      `order raised for ${rupees(r.order_amount_paise)}, captured ${rupees(r.amount_paise)}`,
+    );
+  }
+  if (r.applied_bps !== null) bits.push(`${r.applied_bps / 100}% applied`);
+  if (r.quote_id !== null) bits.push(r.quote_id);
+  if (r.source === "razorpay") bits.push("Razorpay only — no local basket");
+  return bits.join(" · ");
+}
 
 export default async function MerchantOrders({
   searchParams,
@@ -16,15 +29,28 @@ export default async function MerchantOrders({
   const showing: "paid" | "awaiting_payment" | "closed" =
     tab === "awaiting" ? "awaiting_payment" : tab === "closed" ? "closed" : "paid";
 
-  const paid = ordersByStatus("paid");
-  const awaiting = ordersByStatus("awaiting_payment");
-  // A link the buyer closed. It leaves Awaiting the moment they close it, so
-  // the pipeline number stops counting money that is not coming.
-  const closed = ordersByStatus("closed");
-  const rows = showing === "paid" ? paid : showing === "closed" ? closed : awaiting;
+  /**
+   * The Razorpay account, with the local log folded in.
+   *
+   * This page used to read `ordersByStatus` alone — a file in /tmp on a
+   * serverless host, which a cold start deletes. The merchant then saw an empty
+   * Orders page while the Razorpay dashboard showed captured payments, which is
+   * the worst possible thing for a console whose entire claim is that it tells
+   * you the truth about money.
+   */
+  const ledger = await moneyLedger();
 
-  const revenue = paid.reduce((n, o) => n + o.amount_paise, 0);
-  const pipeline = awaiting.reduce((n, o) => n + o.amount_paise, 0);
+  const paid = ledger.rows.filter((r) => r.status === "paid");
+  const awaiting = ledger.rows.filter((r) => r.status === "awaiting_payment");
+  const closed = ledger.rows.filter((r) => r.status === "closed");
+  const failed = ledger.rows.filter((r) => r.status === "failed");
+
+  const rows =
+    showing === "paid" ? paid : showing === "closed" ? [...closed, ...failed] : awaiting;
+
+  // Revenue is what Razorpay captured, never what a link was raised for.
+  const revenue = paid.reduce((n, r) => n + r.amount_paise, 0);
+  const pipeline = awaiting.reduce((n, r) => n + r.amount_paise, 0);
 
   return (
     <ConsoleChrome current="/merchant/orders">
@@ -34,21 +60,38 @@ export default async function MerchantOrders({
         Razorpay reports a payment against it.
       </p>
       <p className="judge-note">
-        Gated pay. A Payment Link is an invitation, not revenue — paid and unpaid are kept apart so unpaid can never read as money in.
+        Read from the Razorpay account, not from a local file. Every paid row here is a captured
+        payment id you can find in the Razorpay dashboard; the local log only adds what the basket
+        contained, and a row survives without it.
       </p>
+
+      {!ledger.live && (
+        <div className="mc-banner" style={{ marginBottom: 12 }}>
+          Could not reach Razorpay just now — this is the local cache only.
+          {ledger.error === null ? "" : ` Razorpay said: ${ledger.error}`}
+        </div>
+      )}
 
       <div className="mc-grid" style={{ marginBottom: 12 }}>
         <div className="mc-stat">
           <div className="v" style={{ color: "var(--ok)" }}>
             {rupees(revenue)}
           </div>
-          <div className="k">collected · {paid.length} paid</div>
+          <div className="k">captured · {paid.length} paid</div>
         </div>
         <div className="mc-stat">
           <div className="v" style={{ color: "var(--muted)" }}>
             {rupees(pipeline)}
           </div>
           <div className="k">awaiting payment · {awaiting.length} links</div>
+        </div>
+        <div className="mc-stat">
+          <div className="v" style={{ color: "var(--muted)" }}>
+            {ledger.live ? "live" : "cache"}
+          </div>
+          <div className="k">
+            {ledger.live ? "read from Razorpay just now" : "Razorpay unreachable"}
+          </div>
         </div>
       </div>
 
@@ -69,7 +112,7 @@ export default async function MerchantOrders({
           className={showing === "closed" ? "mc-btn" : "mc-btn mc-btn--quiet"}
           href="/merchant/orders?tab=closed"
         >
-          Closed ({closed.length})
+          Closed ({closed.length + failed.length})
         </a>
       </div>
 
@@ -77,58 +120,88 @@ export default async function MerchantOrders({
         {rows.length === 0 ? (
           <div className="mc-empty">
             {showing === "paid"
-              ? "No payments collected yet. A link becomes an order here once Razorpay confirms it."
+              ? "No payments captured on this Razorpay account yet. A link becomes an order here once Razorpay confirms it."
               : showing === "closed"
-                ? "No links have been closed. A buyer who walks away from a link closes it, and it lands here."
+                ? "No links have been closed or failed."
                 : "No links awaiting payment."}
           </div>
         ) : (
           <table className="mc-table">
             <thead>
               <tr>
-                <th>Order</th>
                 <th>Items</th>
                 <th className="num">Asked</th>
                 <th className="num">Applied</th>
                 <th>Offer</th>
+                <th>Payment</th>
                 <th>Payment link</th>
                 <th className="num">Amount</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((o) => (
-                <tr key={o.order_id} title={explainOrder(o)}>
-                  <td style={{ color: "var(--muted)" }}>{o.order_id.slice(0, 14)}…</td>
-                  <td>{o.lines.map((l) => `${l.title} ×${l.qty}`).join(", ")}
-                    {(o.gift_lines ?? []).map((g) => (
+              {rows.map((r) => (
+                <tr key={r.key} title={why(r)}>
+                  <td>
+                    {r.summary === "" ? (
+                      <span style={{ color: "var(--muted)" }}>
+                        {r.quote_id === null ? "Paid on Razorpay" : `Quote ${r.quote_id}`}
+                      </span>
+                    ) : (
+                      r.summary
+                    )}
+                    {r.gift_lines.map((g) => (
                       <div key={g.sku_id} className="mc-tiny">
                         {g.title} × {g.qty} — free with {g.from_campaign_id ?? "a campaign"}
                       </div>
-                    ))}</td>
-                  <td className="num">{o.asked_bps / 100}%</td>
-                  <td className="num">{o.applied_bps / 100}%</td>
-                  <td>{o.offer_id ?? "—"}</td>
-                  <td>
-                    <a href={o.short_url} target="_blank" rel="noreferrer">
-                      {o.payment_link_id.slice(0, 16)}…
-                    </a>
+                    ))}
+                    {r.source === "razorpay" && (
+                      <div className="mc-tiny">basket not in local log</div>
+                    )}
                   </td>
-                  <td className="num">{rupees(o.amount_paise)}</td>
+                  <td className="num">{r.asked_bps === null ? "—" : `${r.asked_bps / 100}%`}</td>
+                  <td className="num">
+                    {r.applied_bps === null ? "—" : `${r.applied_bps / 100}%`}
+                  </td>
+                  <td>{r.offer_id ?? "—"}</td>
+                  <td className="mono">
+                    {r.payment_id === null ? (
+                      "—"
+                    ) : (
+                      <span title={r.payment_id}>{r.payment_id}</span>
+                    )}
+                  </td>
+                  <td>
+                    {r.payment_link_id === null ? (
+                      "—"
+                    ) : r.short_url === null ? (
+                      <span className="mono">{r.payment_link_id}</span>
+                    ) : (
+                      <a href={r.short_url} target="_blank" rel="noreferrer">
+                        {r.payment_link_id}
+                      </a>
+                    )}
+                  </td>
+                  <td className="num">
+                    {rupees(r.amount_paise)}
+                    {r.order_amount_paise !== null &&
+                      r.order_amount_paise !== r.amount_paise && (
+                        <div className="mc-tiny">of {rupees(r.order_amount_paise)}</div>
+                      )}
+                  </td>
                   <td>
                     <span
                       className="mc-pill"
                       data-tone={
-                        o.status === "paid" ? "live" : o.status === "closed" ? "blocked" : "paused"
+                        r.status === "paid"
+                          ? "live"
+                          : r.status === "awaiting_payment"
+                            ? "paused"
+                            : "blocked"
                       }
                     >
-                      {o.status === "paid" ? "paid" : o.status === "closed" ? "closed" : "awaiting"}
+                      {r.status === "awaiting_payment" ? "awaiting" : r.status}
                     </span>
-                    {o.status === "closed" && o.cancelled_at_razorpay === false && (
-                      <div style={{ color: "var(--muted)", fontSize: 11.5 }}>
-                        closed here only — Razorpay refused the cancel
-                      </div>
-                    )}
                   </td>
                 </tr>
               ))}
