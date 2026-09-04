@@ -1077,3 +1077,12 @@
   border: 2px dashed var(--nl-green); border-radius: 10px;
   padding: 14px 20px; display: inline-block;
 }
+
+/* The bar naming which shop you are in, with the way out. */
+[data-surface="store"] .sc-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  margin: 18px 0 22px; padding: 10px 14px;
+  border: 1px solid var(--nl-ink); border-radius: 10px;
+  font-size: 14px;
+}

@@ -2,8 +2,9 @@ import { ProductCard } from "@/components/ProductCard";
 import { CATALOG } from "@/lib/catalog";
 
 import { StoreChrome } from "@/components/StoreChrome";
-import { unlockedTenant } from "@/server/shop-code";
+import { enteredCode, unlockedTenant } from "@/server/shop-code";
 
+import { ExitShop } from "./ExitShop";
 import { ShopCodeGate } from "./ShopCodeGate";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +14,7 @@ export default async function ShopPage() {
   const rest = CATALOG.products.filter((p) => p.blocked || p.availability !== "in_stock");
 
   const tenant = await unlockedTenant();
+  const code = await enteredCode();
 
   if (tenant === null) {
     return (
@@ -32,6 +34,7 @@ export default async function ShopPage() {
 
   return (
     <StoreChrome>
+      <ExitShop code={code ?? ""} />
       <h1 style={{ fontSize: 34 }}>The shop</h1>
       <p className="nl-sub" style={{ marginBottom: "var(--space-3)" }}>
         The shop is one module on the control plane. Agent-readable at{" "}

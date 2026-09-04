@@ -53,3 +53,12 @@ export async function unlockedTenant(): Promise<string | null> {
   const code = jar.get(SHOP_CODE_COOKIE)?.value;
   return code === undefined ? null : tenantForCode(code);
 }
+
+/** The code this browser typed, so the shop can name the shelf it is showing. */
+export async function enteredCode(): Promise<string | null> {
+  const jar = await cookies();
+  const code = jar.get(SHOP_CODE_COOKIE)?.value ?? null;
+  // Only report a code that still resolves: a retired one is not where the
+  // shopper is, it is a stale cookie.
+  return code !== null && tenantForCode(code) !== null ? normaliseCode(code) : null;
+}
