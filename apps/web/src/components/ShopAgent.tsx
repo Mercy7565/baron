@@ -374,7 +374,7 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
 
       <div className="nl-panel cs-stack">
         <div className="cs-row" style={{ flexWrap: "wrap" }}>
-          {["buy me the niacinamide", "buy me this sunscreen"].map((s) => (
+          {["buy me the niacinamide", "buy me the invisible sunscreen"].map((s) => (
             <button
               key={s}
               className="nl-btn nl-btn--ghost"

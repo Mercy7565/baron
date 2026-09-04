@@ -258,9 +258,19 @@ export function updateQuote(id: string, patch: Partial<Quote>): Quote | null {
 export function cancelQuote(id: string, when = new Date()): Quote | null {
   const quote = getQuote(id);
   if (quote === null) return null;
-  if (quote.payment_link_id !== null || quote.payment_id !== null) return null;
+
+  // Paid is the only thing that locks a quote. Everything else — a link that
+  // was issued, a quote that has expired, a mandate that has gone — is still an
+  // unpaid bag the buyer is entitled to be rid of.
+  //
+  // This used to demand status `quoted` or `approved` and refuse if a link
+  // existed, which left `link_issued` rows uncloseable forever: the buyer got
+  // "that quote cannot be cancelled" and the row sat on their Unpaid tab with
+  // no way out. Whether a Payment Link is also cancelled at Razorpay is the
+  // caller's business and is best-effort; it must not decide whether our own
+  // record can be closed.
+  if (quote.payment_id !== null || quote.status === "paid") return null;
   if (quote.status === "cancelled") return quote;
-  if (quote.status !== "quoted" && quote.status !== "approved") return null;
 
   return updateQuote(id, { status: "cancelled", expires_at: when.toISOString() });
 }

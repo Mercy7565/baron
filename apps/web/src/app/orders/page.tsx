@@ -1,5 +1,5 @@
 import { explainOrder, paidOrdersFor, unpaidOrdersFor } from "@countersign/orders";
-import { allQuotes, isExpired } from "@countersign/quotes";
+import { allQuotes } from "@countersign/quotes";
 
 import { StoreChrome } from "@/components/StoreChrome";
 import { buyerId } from "@/server/require-role";
@@ -35,15 +35,22 @@ export default async function OrdersPage({
    * here until the buyer asks for one. Without this list an agent-driven quote
    * would have no button anywhere and no way to be paid.
    */
-  const now = new Date();
+  /**
+   * Unpaid bags that never became a link.
+   *
+   * Expired ones are included on purpose. Hiding them made a bag that timed out
+   * vanish from the Unpaid tab while staying on the books — the buyer could
+   * neither pay it nor close it. It is still their bag; they should be able to
+   * clear it.
+   */
   const pending = allQuotes().filter(
     (q) =>
       q.buyer_user_id === buyer &&
       q.payment_link_id === null &&
       q.status !== "cancelled" &&
       q.status !== "superseded" &&
-      (q.verdict === "ALLOW" || q.verdict === "CLAMP") &&
-      !isExpired(q, now),
+      q.status !== "paid" &&
+      (q.verdict === "ALLOW" || q.verdict === "CLAMP"),
   );
 
   const unpaidRows: UnpaidRow[] = unpaid.map((o) => ({
