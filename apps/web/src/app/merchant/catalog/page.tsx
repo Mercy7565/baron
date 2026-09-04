@@ -15,6 +15,9 @@ export default function MerchantCatalog() {
         Price, stock and availability as the store currently sells them. Edits are kept as an
         overlay, so the shipped catalog file is never destroyed.
       </p>
+      <p className="judge-note">
+        The agent-readable catalog. Price, stock and margin live here once, and the shop, the assistant and any outside agent all read the same rows.
+      </p>
 
       <AddProduct />
       <CatalogEditor products={CATALOG.products} />

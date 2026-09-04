@@ -10,6 +10,8 @@ import { causeOf, couponPercentOf, ledgerRows, paidLedgerRows } from "@/server/l
 
 import { MarginFloor, type FloorSample } from "./MarginFloor";
 import { OverviewTable, type OverviewRow } from "./OverviewTable";
+import { shopCodeFor } from "@/server/shop-code";
+import { DEFAULT_TENANT } from "@/server/users";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -62,6 +64,9 @@ export default function MerchantOverview() {
   // Only gift campaigns have a budget to have left. A suggestion campaign
   // spends nothing, so counting its ceiling here inflated the tile with money
   // that was never at risk.
+  // A code is earned by having something to sell, not by signing up.
+  const shopCode = shopCodeFor(DEFAULT_TENANT);
+
   const budgetLeft = liveCampaigns
     .filter((c) => c.kind === "gift")
     .reduce((n, c) => n + c.left_paise, 0);
@@ -126,6 +131,9 @@ export default function MerchantOverview() {
         Policy decides what money may move before anything reaches Razorpay. This console is where
         you set the bounds it decides against.
       </p>
+      <p className="judge-note">
+        Revenue and the coupon budget in one place: what the store actually took, which campaigns caused it, and whether the decision ledger is intact.
+      </p>
 
       <div className="mc-grid" style={{ marginBottom: 12 }}>
         <div className="mc-stat">
@@ -155,6 +163,21 @@ export default function MerchantOverview() {
           <div className="k">audit chain{chain.ok ? ` · ${chain.length} rows` : ""}</div>
         </div>
       </div>
+
+      {shopCode === null ? (
+        <div className="mc-banner" style={{ marginBottom: 12 }}>
+          Add one in-stock product and Baron will issue your shop code.
+        </div>
+      ) : (
+        <div className="mc-panel" style={{ marginBottom: 12 }}>
+          <h2>Your shop code</h2>
+          <p className="mc-sub" style={{ marginTop: 0 }}>
+            Give this to customers. They enter it on Baron to see your catalog and nobody
+            else&rsquo;s.
+          </p>
+          <div className="mc-code">{shopCode}</div>
+        </div>
+      )}
 
       <div className="mc-banner" style={{ marginBottom: 12 }}>
         Campaigns suggest a product and a %. Baron picks which of the 7 Razorpay coupons may

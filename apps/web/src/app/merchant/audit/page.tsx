@@ -41,6 +41,9 @@ export default function MerchantAudit() {
         Rows are only succeeded payments. Each one carries what was asked, what policy allowed, and
         the coupon Razorpay attached. Click a row for the reason in plain English.
       </p>
+      <p className="judge-note">
+        Explainable money. Every paid order in one line of English, with the coupon that attached and the hash chain that makes the row tamper-evident.
+      </p>
 
       <div
         className="mc-panel mc-chain"

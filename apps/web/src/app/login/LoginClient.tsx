@@ -4,147 +4,134 @@ import { useState } from "react";
 
 type Role = "customer" | "merchant";
 
-const ROLES: Array<{
-  role: Role;
-  title: string;
-  blurb: string;
-  lands: string;
-  sample: string;
-}> = [
-  {
-    role: "customer",
-    title: "Customer",
-    blurb: "Browse the shop, talk to the agent, and pay a Razorpay link.",
-    lands: "/home",
-    sample: "shopper@example.com",
-  },
-  {
-    role: "merchant",
-    title: "Merchant",
-    blurb: "Run the store: catalog, campaign budgets, orchestrator, audit.",
-    lands: "/merchant",
-    sample: "owner@store.test",
-  },
-];
-
 /**
- * Demo sign-in. Two equal choices, no password — the split is the product, and
- * making people invent credentials for a demo teaches nobody anything.
+ * Sign in, or create an account.
+ *
+ * Any username and password makes a new account — this is a demo, and the two
+ * fixed logins below are printed on the page because a judge should never have
+ * to guess a credential to see the product. The role split is the thing being
+ * shown, so the form is honest about which side you are about to land on.
  */
 export function LoginClient({ next, need }: { next: string | null; need: string | null }) {
-  const [email, setEmail] = useState("");
-  const [busy, setBusy] = useState<Role | null>(null);
+  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<Role>(need === "merchant" ? "merchant" : "customer");
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function signIn(role: Role, landing: string): Promise<void> {
-    setBusy(role);
+  async function submit(): Promise<void> {
+    setBusy(true);
     setError(null);
     try {
-      const r = await fetch("/api/auth/login", {
+      const res = await fetch(mode === "login" ? "/api/auth/login" : "/api/auth/signup", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim() === "" ? ROLES.find((x) => x.role === role)?.sample : email.trim(),
-          role,
-        }),
+        body: JSON.stringify({ username, password, role }),
       });
-      if (!r.ok) {
-        const d = (await r.json()) as { error?: string };
-        setError(d.error ?? "Could not sign in.");
+      const d = (await res.json()) as { error?: string; role?: Role };
+      if (!res.ok) {
+        setError(d.error ?? "Could not sign you in.");
         return;
       }
-      // Land where they were headed, if that destination suits the role.
-      const wantsMerchant = next !== null && (next.startsWith("/merchant") || next.startsWith("/campaigns"));
-      const target =
-        next !== null && ((role === "merchant") === wantsMerchant) ? next : landing;
-      window.location.href = target;
+      // Land where the account belongs, not where the form guessed.
+      const landing = d.role === "merchant" ? "/merchant" : (next ?? "/home");
+      window.location.href = landing;
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
   }
 
   return (
     <>
-      {need !== null && (
-        <div
-          style={{
-            marginBottom: 20,
-            padding: "14px 18px",
-            borderRadius: 10,
-            background: "var(--nl-mint-12)",
-            border: "1px solid var(--nl-mint-24)",
-            color: "var(--nl-mint)",
+        {need !== null && (
+          <p className="sg-quote-2" style={{ fontSize: 17, marginBottom: 22 }}>
+            That page is for the <strong>{need}</strong> side of Baron. Sign in with that kind of
+            account to continue.
+          </p>
+        )}
+
+        <div className="lg-tabs">
+          <button
+            className={mode === "login" ? "lg-tab is-on" : "lg-tab"}
+            onClick={() => setMode("login")}
+          >
+            Sign in
+          </button>
+          <button
+            className={mode === "signup" ? "lg-tab is-on" : "lg-tab"}
+            onClick={() => setMode("signup")}
+          >
+            Create account
+          </button>
+        </div>
+
+        <form
+          className="lg-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void submit();
           }}
         >
-          That page is for the <strong>{need}</strong> side of this site. Sign in with that role to
-          continue.
-        </div>
-      )}
+          <label>
+            <span>Username</span>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+            />
+          </label>
 
-      <label style={{ display: "block", marginBottom: 20 }}>
-        <span style={{ fontSize: 14, color: "var(--nl-mint)" }}>
-          Email (optional for the demo)
-        </span>
-        <input
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
-          style={{
-            width: "100%",
-            marginTop: 6,
-            font: "inherit",
-            padding: "12px 14px",
-            border: "1px solid var(--nl-mint-24)",
-            borderRadius: 10,
-            background: "var(--nl-ink)",
-            color: "var(--nl-mint)",
-          }}
-        />
-      </label>
+          <label>
+            <span>Password</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
+            />
+          </label>
 
-      <div style={{ display: "grid", gap: 14, gridTemplateColumns: "1fr 1fr" }}>
-        {ROLES.map((r) => (
-          <div
-            key={r.role}
-            className="sg-door"
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 10,
-              cursor: "default",
-              // Customer edge in green, merchant edge in amber: two doors, one family.
-              borderColor: r.role === "customer" ? "var(--nl-green)" : "var(--nl-amber)",
-            }}
-          >
-            <h2 style={{ margin: 0, fontSize: 21 }}>{r.title}</h2>
-            <p style={{ margin: 0, fontSize: 15, flex: 1, color: "var(--nl-mint)" }}>
-              {r.blurb}
-            </p>
-            <button
-              className="st-btn"
-              style={{
-                fontSize: 15,
-                padding: "11px 18px",
-                background: r.role === "customer" ? "var(--nl-green)" : "var(--nl-amber)",
-                borderColor: r.role === "customer" ? "var(--nl-green)" : "var(--nl-amber)",
-                color: r.role === "customer" ? "#ffffff" : "var(--nl-ink)",
-              }}
-              disabled={busy !== null}
-              onClick={() => void signIn(r.role, r.lands)}
-            >
-              {busy === r.role ? "Signing in…" : `Continue as ${r.title.toLowerCase()}`}
-            </button>
+          {mode === "signup" && (
+            <div className="lg-roles">
+              <button
+                type="button"
+                className={role === "customer" ? "lg-role is-on" : "lg-role"}
+                onClick={() => setRole("customer")}
+              >
+                I want to shop
+              </button>
+              <button
+                type="button"
+                className={role === "merchant" ? "lg-role is-on" : "lg-role"}
+                onClick={() => setRole("merchant")}
+              >
+                I run a shop
+              </button>
+            </div>
+          )}
+
+          {error !== null && <p className="lg-error">{error}</p>}
+
+          <button className="lg-submit" disabled={busy} type="submit">
+            {busy ? "One moment…" : mode === "login" ? "Sign in" : "Create account and continue"}
+          </button>
+        </form>
+
+        <div className="lg-demo">
+          <strong>Demo accounts</strong>
+          <div>
+            merchant · <code>merchant</code> / <code>merchant</code> — the skincare shop already
+            loaded
           </div>
-        ))}
-      </div>
-
-      {error !== null && (
-        <p style={{ color: "var(--danger)", marginTop: 16 }}>{error}</p>
-      )}
-
-      <p style={{ fontSize: 13, marginTop: 22, textAlign: "center", color: "var(--nl-mint)" }}>
-        Demo sign-in. No password, no OAuth — the role is what matters.
-      </p>
+          <div>
+            shopper · <code>aryan</code> / <code>aryan</code>
+          </div>
+          <p>
+            Any other username and password creates a new account. Baron never asks for your
+            Razorpay keys.
+          </p>
+        </div>
     </>
   );
 }

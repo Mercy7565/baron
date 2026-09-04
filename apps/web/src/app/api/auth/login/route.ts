@@ -1,28 +1,38 @@
 import { cookies } from "next/headers";
 
-import { SESSION_COOKIE, type Role, encodeSession } from "@/server/session";
+import { SESSION_COOKIE, encodeSession } from "@/server/session";
+import { authenticate } from "@/server/users";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-/** POST /api/auth/login { email, role } — demo only, no password. */
+/**
+ * POST /api/auth/login { username, password }
+ *
+ * The role comes from the account, never from the request: a form that could
+ * name its own role would make the merchant console a text field away.
+ */
 export async function POST(request: Request): Promise<Response> {
-  let body: { email?: string; role?: string };
+  let body: { username?: string; password?: string; email?: string; role?: string };
   try {
     body = (await request.json()) as typeof body;
   } catch {
     return Response.json({ error: "body must be JSON" }, { status: 400 });
   }
 
-  const email = String(body.email ?? "").trim();
-  const role = body.role === "merchant" ? "merchant" : body.role === "customer" ? "customer" : null;
+  const username = String(body.username ?? body.email ?? "").trim();
+  const password = String(body.password ?? "");
 
-  if (email === "") return Response.json({ error: "email is required" }, { status: 400 });
-  if (role === null) {
-    return Response.json({ error: "role must be customer or merchant" }, { status: 400 });
+  const result = authenticate(username, password);
+  if (!result.ok || result.role === undefined || result.username === undefined) {
+    return Response.json({ error: result.error ?? "Could not sign you in." }, { status: 401 });
   }
 
-  const value = await encodeSession({ email, role: role as Role, issued_at: Date.now() });
+  const value = await encodeSession({
+    email: result.username,
+    role: result.role,
+    issued_at: Date.now(),
+  });
 
   const jar = await cookies();
   jar.set(SESSION_COOKIE, value, {
@@ -32,5 +42,5 @@ export async function POST(request: Request): Promise<Response> {
     maxAge: 60 * 60 * 8,
   });
 
-  return Response.json({ ok: true, email, role });
+  return Response.json({ ok: true, username: result.username, role: result.role });
 }

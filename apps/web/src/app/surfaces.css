@@ -1006,3 +1006,74 @@
   padding: 5px 11px; border-radius: 999px;
   background: var(--nl-green); color: var(--on-dark);
 }
+
+/* ============================ SIGN IN / SIGN UP ==========================
+   Lives on the dark stage, because choosing a side of the product is the
+   first thing that happens and it should feel like the front door.
+   ======================================================================== */
+
+[data-surface="stage"] .lg-tabs { display: flex; gap: 8px; margin-bottom: 18px; }
+[data-surface="stage"] .lg-tab {
+  font: inherit; font-size: 14px; font-weight: 600; padding: 8px 16px;
+  border-radius: 999px; cursor: pointer;
+  background: transparent; color: var(--nl-mint); border: 1px solid var(--nl-green);
+}
+[data-surface="stage"] .lg-tab.is-on { background: var(--nl-green); color: var(--on-dark); }
+[data-surface="stage"] .lg-tab:hover { border-color: var(--nl-amber); }
+
+[data-surface="stage"] .lg-form { display: grid; gap: 14px; margin-bottom: 22px; }
+[data-surface="stage"] .lg-form label { display: flex; flex-direction: column; gap: 6px; }
+[data-surface="stage"] .lg-form label > span { font-size: 13px; color: var(--nl-mint); opacity: 0.8; }
+[data-surface="stage"] .lg-form input {
+  font: inherit; font-size: 16px; padding: 11px 13px; border-radius: 9px;
+  background: var(--nl-ink); color: var(--nl-mint); border: 1px solid var(--nl-green);
+}
+[data-surface="stage"] .lg-roles { display: flex; gap: 8px; flex-wrap: wrap; }
+[data-surface="stage"] .lg-role {
+  flex: 1; min-width: 150px; font: inherit; font-size: 14px; padding: 11px 14px;
+  border-radius: 9px; cursor: pointer;
+  background: transparent; color: var(--nl-mint); border: 1px solid var(--nl-green);
+}
+[data-surface="stage"] .lg-role.is-on { background: var(--nl-amber); color: var(--nl-ink); border-color: var(--nl-amber); }
+[data-surface="stage"] .lg-submit {
+  font: inherit; font-size: 16px; font-weight: 650; padding: 13px 18px; border-radius: 10px;
+  cursor: pointer; background: var(--nl-green); color: var(--on-dark); border: 2px solid var(--nl-green);
+}
+[data-surface="stage"] .lg-submit:hover { background: var(--nl-ink); border-color: var(--nl-ink); color: var(--nl-mint); }
+[data-surface="stage"] .lg-submit:disabled { opacity: 0.6; cursor: default; }
+[data-surface="stage"] .lg-error { color: var(--nl-amber); font-size: 14px; margin: 0; }
+
+[data-surface="stage"] .lg-demo {
+  border-top: 1px solid var(--nl-green); padding-top: 16px;
+  font-size: 13.5px; line-height: 1.7; color: var(--nl-mint);
+}
+[data-surface="stage"] .lg-demo strong { display: block; margin-bottom: 6px; }
+[data-surface="stage"] .lg-demo code {
+  background: var(--nl-green); color: var(--on-dark); padding: 1px 6px; border-radius: 4px;
+}
+[data-surface="stage"] .lg-demo p { margin: 10px 0 0; opacity: 0.72; }
+
+/* The small line under each console/shop heading explaining why the screen
+   exists. Muted on purpose: it is for a judge, not for daily use. */
+.judge-note {
+  font-size: 12.5px; line-height: 1.6; margin: -4px 0 16px;
+  opacity: 0.66; max-width: 74ch;
+}
+
+/* Shop code gate. */
+[data-surface="store"] .sc-gate { max-width: 460px; margin: 40px auto; text-align: center; }
+[data-surface="store"] .sc-row { display: flex; gap: 8px; margin: 16px 0 10px; }
+[data-surface="store"] .sc-row input {
+  flex: 1; font: inherit; font-size: 17px; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 12px 14px; border-radius: 10px; border: 1px solid var(--nl-ink); background: var(--nl-mint);
+  color: var(--nl-ink);
+}
+
+/* The shop code, sized to be read off a screen during a demo. */
+[data-surface="console"] .mc-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 30px; font-weight: 700; letter-spacing: 0.14em;
+  color: var(--nl-ink); background: var(--nl-mint);
+  border: 2px dashed var(--nl-green); border-radius: 10px;
+  padding: 14px 20px; display: inline-block;
+}

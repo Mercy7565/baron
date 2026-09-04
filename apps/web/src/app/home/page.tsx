@@ -32,6 +32,11 @@ export default function CustomerHome() {
           Tell the assistant what you want. Your coupon is worked out from your bag, before you
           pay.
         </p>
+        <p className="judge-note">
+          Baron is a platform for agent commerce. Merchants register, load a catalog, run campaigns
+          and read every money decision; shoppers register, save a card, enter a merchant&rsquo;s
+          code and shop it. Razorpay coupons and the kernel still decide what anything costs.
+        </p>
 
         <div style={{ display: "flex", gap: 12, marginTop: 30, flexWrap: "wrap" }}>
           <a className="st-btn" href="/agent">
@@ -58,28 +63,16 @@ export default function CustomerHome() {
         ))}
       </section>
 
-      <section style={{ marginTop: 72 }}>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 22 }}>
-          <h2 style={{ margin: 0 }}>The shop</h2>
-          <a className="st-muted" href="/shop" style={{ fontSize: 15 }}>
-            All {CATALOG.products.length} products →
+      <section style={{ marginTop: 64 }}>
+        <div className="st-card">
+          <h2 style={{ marginTop: 0 }}>Have a shop code?</h2>
+          <p className="st-muted" style={{ marginBottom: 18 }}>
+            Baron is a platform: each merchant runs their own catalog and hands out a code. Enter
+            one to see their shop.
+          </p>
+          <a className="st-btn" href="/shop">
+            Enter a shop code
           </a>
-        </div>
-
-        <div className="st-grid">
-          {featured.map((p) => (
-            <a key={p.id} href={p.url} style={{ textDecoration: "none", color: "inherit" }}>
-              <ProductImage
-                src={p.image}
-                alt={p.title}
-                className="st-tile"
-              />
-              <div style={{ marginTop: 12, fontSize: 16 }}>{p.title}</div>
-              <div className="st-muted nl-money" style={{ fontSize: 15 }}>
-                ₹{(p.price_paise / 100).toFixed(2)}
-              </div>
-            </a>
-          ))}
         </div>
       </section>
 

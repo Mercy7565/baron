@@ -2,12 +2,33 @@ import { ProductCard } from "@/components/ProductCard";
 import { CATALOG } from "@/lib/catalog";
 
 import { StoreChrome } from "@/components/StoreChrome";
+import { unlockedTenant } from "@/server/shop-code";
+
+import { ShopCodeGate } from "./ShopCodeGate";
 
 export const dynamic = "force-dynamic";
 
-export default function ShopPage() {
+export default async function ShopPage() {
   const sellable = CATALOG.products.filter((p) => !p.blocked && p.availability === "in_stock");
   const rest = CATALOG.products.filter((p) => p.blocked || p.availability !== "in_stock");
+
+  const tenant = await unlockedTenant();
+
+  if (tenant === null) {
+    return (
+      <StoreChrome>
+        <section style={{ padding: "56px 0 8px" }}>
+          <h1 style={{ fontSize: 34 }}>Shop</h1>
+          <p className="judge-note">
+            Baron is a platform. A merchant loads a catalog and gets a shop code; a shopper enters
+            that code to see it. The grid below is the agent-readable catalog the assistant and any
+            outside agent read from — one source of price, stock and margin.
+          </p>
+        </section>
+        <ShopCodeGate />
+      </StoreChrome>
+    );
+  }
 
   return (
     <StoreChrome>

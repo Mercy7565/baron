@@ -33,6 +33,9 @@ export default async function MerchantOrders({
         Paid and awaiting are kept apart on purpose. An issued Payment Link is not revenue until
         Razorpay reports a payment against it.
       </p>
+      <p className="judge-note">
+        Gated pay. A Payment Link is an invitation, not revenue — paid and unpaid are kept apart so unpaid can never read as money in.
+      </p>
 
       <div className="mc-grid" style={{ marginBottom: 12 }}>
         <div className="mc-stat">
