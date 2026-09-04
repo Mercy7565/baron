@@ -109,7 +109,7 @@ describe("burnForPaidOrder", () => {
       amount_paise: 24_402,
       asked_bps: 200,
       applied_bps: 200,
-      offer_id: "offer_TXZDq8aiNzKnQA",
+      offer_id: "offer_TXuWY6xddeXxVe",
       verdict: "ALLOW",
       lines: [
         { sku_id: "sku_lipbalm_spf_10", title: "Lip Balm", qty: 1, line_total_paise: 24_900 },
@@ -141,18 +141,24 @@ describe("burnForPaidOrder", () => {
     expect(campaignSpentPaise("cmp_bogo")).toBe(159_900);
   });
 
-  it("charges an accepted paid suggestion at its line total", async () => {
+  it("does NOT charge an accepted paid suggestion", async () => {
     const { burnForPaidOrder } = await import("./burn");
     const { campaignSpentPaise } = await import("@/lib/campaigns");
 
-    burnForPaidOrder(order({
+    // A suggestion campaign costs the store nothing: the shopper paid the
+    // normal price and any discount came from a Razorpay coupon. Charging the
+    // campaign for the sale it won made "spent" punish the ones that worked.
+    const charges = burnForPaidOrder(
+      order({
         lines: [
           { sku_id: "sku_cleanser_gel_100", title: "Cleanser", qty: 1, line_total_paise: 39_900 },
         ],
         line_origins: { sku_cleanser_gel_100: "cmp_bogo" },
-      }));
+      }),
+    );
 
-    expect(campaignSpentPaise("cmp_bogo")).toBe(39_900);
+    expect(charges).toEqual([]);
+    expect(campaignSpentPaise("cmp_bogo")).toBe(0);
   });
 
   it("charges nothing when no campaign caused anything", async () => {

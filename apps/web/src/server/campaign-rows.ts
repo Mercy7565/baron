@@ -16,9 +16,28 @@ import { cancelledSeedIds, createdCampaigns } from "@/server/overlay";
  */
 export type CampaignState = "Live" | "Paused" | "Ended" | "Cancelled";
 
+/**
+ * Two kinds of campaign, and they cost the store differently.
+ *
+ *   gift        A merchant campaign that hands over a product. The store pays
+ *               for it, at catalog price, so it has a budget and that budget is
+ *               spent on every paid gift.
+ *
+ *   suggestion  A campaign that only points the assistant at a product. Nothing
+ *               is given away: the shopper pays the normal price and any
+ *               discount is a Razorpay coupon the kernel chose. There is no
+ *               spend to track, so a Budget/Spent/Left column on one of these
+ *               was always going to read zero and look broken.
+ *
+ * Coupon rupees are not campaign spend. A suggestion campaign that leads to a
+ * sale has made the store money, not cost it any.
+ */
+export type CampaignKind = "gift" | "suggestion";
+
 export interface CampaignRowData {
   id: string;
   name: string;
+  kind: CampaignKind;
   state: CampaignState;
   /** True only for Live: active, inside its window, not paused or cancelled. */
   live: boolean;
@@ -56,6 +75,8 @@ export function campaignRows(now = new Date()): CampaignRowData[] {
     return {
       id: c.id,
       name: c.name,
+      // Shipped campaigns only ever suggest; none of them gives anything away.
+      kind: "suggestion",
       state,
       live: state === "Live",
       budget_paise: c.spend_ceiling_paise,
@@ -75,6 +96,8 @@ export function campaignRows(now = new Date()): CampaignRowData[] {
     return {
       id: c.id,
       name: c.name,
+      // Only buy-one-get-one actually gives a product away.
+      kind: c.kind === "bogo" ? "gift" : "suggestion",
       state,
       live: state === "Live",
       budget_paise: c.budget_paise,

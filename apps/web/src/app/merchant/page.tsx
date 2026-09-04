@@ -59,7 +59,12 @@ export default function MerchantOverview() {
 
   const allCampaigns = campaignRows(now);
   const liveCampaigns = allCampaigns.filter((c) => c.live);
-  const budgetLeft = liveCampaigns.reduce((n, c) => n + c.left_paise, 0);
+  // Only gift campaigns have a budget to have left. A suggestion campaign
+  // spends nothing, so counting its ceiling here inflated the tile with money
+  // that was never at risk.
+  const budgetLeft = liveCampaigns
+    .filter((c) => c.kind === "gift")
+    .reduce((n, c) => n + c.left_paise, 0);
 
   const withLink = live.filter((r) => r.outcome !== "no link");
 
@@ -133,7 +138,7 @@ export default function MerchantOverview() {
         </div>
         <div className="mc-stat">
           <div className="v">{rupees(budgetLeft)}</div>
-          <div className="k">budget left on live campaigns</div>
+          <div className="k">budget left on live gift campaigns</div>
         </div>
         <div className="mc-stat">
           <div className="v">{live.length}</div>

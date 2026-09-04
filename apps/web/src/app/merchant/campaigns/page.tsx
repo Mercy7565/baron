@@ -61,11 +61,21 @@ export default function MerchantCampaigns() {
   const spentOn = (campaignId: string): number => campaignSpentPaise(campaignId);
 
   /** Paid orders this campaign actually caused — a gift, or a suggestion taken. */
+  /**
+   * Paid orders this campaign caused, by any of the three routes.
+   *
+   * It used to check only gifts and accepted suggestions, so a campaign that
+   * was simply in play on the quote — which is how every shipped campaign
+   * works — read "no sales yet" on an order it had plainly influenced. A sale
+   * is not a spend; a suggestion campaign can have many of the first and none
+   * of the second.
+   */
   const salesOn = (campaignId: string): number =>
     paid.filter(
       (o) =>
         (o.gift_lines ?? []).some((g) => g.from_campaign_id === campaignId) ||
-        Object.values(o.line_origins ?? {}).includes(campaignId),
+        Object.values(o.line_origins ?? {}).includes(campaignId) ||
+        quotes.find((q) => q.quote_id === o.quote_id)?.campaign_id === campaignId,
     ).length;
 
   const skus: SkuOption[] = CATALOG.products
@@ -76,6 +86,7 @@ export default function MerchantCampaigns() {
   const table = campaignRows(now).map((c) => ({
     id: c.id,
     name: c.name,
+    kind: c.kind,
     cancelled: c.state === "Cancelled",
     state: c.state,
     suggests:
@@ -150,11 +161,19 @@ export default function MerchantCampaigns() {
                     {c.state}
                   </span>
                 </td>
-                <td className="num">{rupees(c.budget)}</td>
-                <td className="num">{rupees(c.spent)}</td>
-                <td className="num">
-                  <strong>{rupees(c.left)}</strong>
-                </td>
+                {c.kind === "gift" ? (
+                  <>
+                    <td className="num">{rupees(c.budget)}</td>
+                    <td className="num">{rupees(c.spent)}</td>
+                    <td className="num">
+                      <strong>{rupees(c.left)}</strong>
+                    </td>
+                  </>
+                ) : (
+                  <td className="mc-tiny" colSpan={3}>
+                    No spend budget — the coupon is Razorpay&rsquo;s and the stock must be on sale.
+                  </td>
+                )}
                 <td>
                   <RowControls
                     id={c.id}

@@ -43,16 +43,10 @@ export function burnForPaidOrder(order: Order): BurnCharge[] {
     });
   }
 
-  const origins = order.line_origins ?? {};
-  for (const line of order.lines) {
-    const campaign = origins[line.sku_id];
-    if (campaign === undefined) continue;
-    const prev = owed.get(campaign);
-    owed.set(campaign, {
-      paise: (prev?.paise ?? 0) + line.line_total_paise,
-      why: prev?.why ?? "suggested_line",
-    });
-  }
+  // Accepted suggestions are deliberately NOT charged. A campaign that talked a
+  // shopper into a product they then paid full price for has earned the store
+  // money; billing it for the sale made "spent" a number that punished the
+  // campaigns that worked.
 
   const charges: BurnCharge[] = [];
   for (const [campaign_id, { paise, why }] of owed) {
