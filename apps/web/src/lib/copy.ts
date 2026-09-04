@@ -19,12 +19,11 @@ export const CAPTURE_TRUTH =
   "When Razorpay allows server charge, this vault is ready. Until then, the payment link is the till.";
 
 /**
- * The judge-facing paragraph under the saved card.
+ * The line under a saved card.
  *
- * Says what is true today (you tap Generate payment link and pay on Razorpay)
- * and what changes when the account gets server-to-server charge — in the
- * future tense, because it does not work yet and pretending otherwise is the
- * one thing this product must never do.
+ * Says what happens today and what changes when the account gets
+ * server-to-server charge — in the future tense, because it does not work yet
+ * and pretending otherwise is the one thing this product must never do.
  */
-export const WALLET_JUDGE_NOTE =
-  "The card stays here so an outside agent never sees it. Today you tap Generate payment link and pay on Razorpay. When server-to-server charge is enabled, Baron will charge this saved card after policy allows the order — still without showing the number to the agent.";
+export const WALLET_NOTE =
+  "Your card stays here and is never shown to the assistant. Today you pay each order on Razorpay. If server-to-server charge is enabled later, Baron will charge this card once the store has approved the order.";

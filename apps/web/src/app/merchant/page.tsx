@@ -131,8 +131,9 @@ export default function MerchantOverview() {
         Policy decides what money may move before anything reaches Razorpay. This console is where
         you set the bounds it decides against.
       </p>
-      <p className="judge-note">
-        Revenue and the coupon budget in one place: what the store actually took, which campaigns caused it, and whether the decision ledger is intact.
+      <p className="page-help">
+        What the store took, which campaigns brought it in, and how much campaign budget is left.
+        Figures update as Razorpay confirms payments.
       </p>
 
       <div className="mc-grid" style={{ marginBottom: 12 }}>

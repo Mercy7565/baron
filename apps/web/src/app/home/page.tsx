@@ -32,10 +32,9 @@ export default function CustomerHome() {
           Tell the assistant what you want. Your coupon is worked out from your bag, before you
           pay.
         </p>
-        <p className="judge-note">
-          Baron is a platform for agent commerce. Merchants register, load a catalog, run campaigns
-          and read every money decision; shoppers register, save a card, enter a merchant&rsquo;s
-          code and shop it. Razorpay coupons and the kernel still decide what anything costs.
+        <p className="page-help">
+          Enter a shop code to browse a merchant&rsquo;s products, then buy in the basket or by
+          asking the assistant. Prices and discounts are set by the store, not by the assistant.
         </p>
 
         <div style={{ display: "flex", gap: 12, marginTop: 30, flexWrap: "wrap" }}>

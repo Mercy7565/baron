@@ -11,10 +11,9 @@ export default function AgentPage() {
         Tell it what you want. It can search, add to the basket, suggest and quote — and it cannot
         charge you a rupee the store has not already agreed to.
       </p>
-      <p className="judge-note">
-        The assistant is scoped to one shop. Without a shop code it will not search, add, suggest,
-        quote or pay, because an agent that cannot see a catalog has nothing honest to say about
-        what is on it.
+      <p className="page-help">
+        The assistant works inside one shop at a time. Enter a shop code and it can search, add to
+        your basket and price it. It cannot set the price or invent a product.
       </p>
       <ShopAgent />
     </StoreChrome>

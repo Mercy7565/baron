@@ -20,10 +20,9 @@ export default async function ShopPage() {
     return (
       <StoreChrome>
         <h1>Shop</h1>
-        <p className="judge-note">
-          Baron is a platform. A merchant loads a catalog and gets a shop code; a shopper enters
-          that code to see it. Until then there is no grid, and the assistant is blind — it will
-          not search, add, suggest, quote or pay for a shop it cannot see.
+        <p className="page-help">
+          Each merchant on Baron has its own shop code. Enter the one you were given to see their
+          products. The assistant can only search the shop you are in.
         </p>
         <ShopCodeGate />
       </StoreChrome>

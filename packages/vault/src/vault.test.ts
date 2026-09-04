@@ -366,7 +366,19 @@ describe("a Payment Link is only ever created by a human click", () => {
 
   it("keeps the server-to-server promise in the future tense", () => {
     const copy = readFileSync(join(WEB, "lib", "copy.ts"), "utf8");
-    expect(copy).toContain("When server-to-server charge is enabled");
-    expect(copy).toContain("Today you tap Generate payment link");
+
+    // Asserted as meaning rather than as one exact sentence, so a copy pass can
+    // reword this without either breaking the build or — much worse — quietly
+    // promoting the promise to the present tense.
+    expect(copy).toContain("server-to-server charge is enabled");
+    // What happens now, said plainly.
+    expect(copy).toMatch(/Today you pay/);
+    // What would happen later, and only later.
+    expect(copy).toMatch(/will charge/);
+
+    // The claim this test exists to prevent: that Baron already charges a
+    // stored card without the buyer opening a link.
+    expect(copy).not.toMatch(/Baron charges (this|your) card/i);
+    expect(copy).not.toMatch(/we charge (this|your) card/i);
   });
 });

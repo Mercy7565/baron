@@ -116,8 +116,11 @@ const FACES: Face[] = [
 export default function ProtocolsPage() {
   return (
     <main>
-      <p className="nl-kicker">Honest surface</p>
       <h1 style={{ fontWeight: 650 }}>Protocols</h1>
+      <p className="page-help">
+        Which agent-commerce standards Baron speaks, and how far. Anything not implemented is named
+        here rather than left implied.
+      </p>
 
       <div className="cs-scroll-x" style={{ margin: "var(--space-3) 0" }}>
         <table className="cs-table">
@@ -206,9 +209,8 @@ export default function ProtocolsPage() {
         merchant-side control plane that an agent cannot bypass. That is what this is.
       </p>
       <p className="cs-muted">
-        Every face below is deliberately thin. Where we have not implemented something, it is named
-        rather than glossed — in this page and in{" "}
-        <a href="/.well-known/countersign.json">the profile JSON</a>.
+        Each surface below is intentionally small. The same information is available as{" "}
+        <a href="/.well-known/countersign.json">a profile JSON</a>.
       </p>
 
       {FACES.map((f) => (

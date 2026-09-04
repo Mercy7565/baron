@@ -115,8 +115,9 @@ export default function MerchantCampaigns() {
         You set the budget and the margin you must keep. The assistant suggests products. Razorpay
         coupons still do the discount. We only count budget after a customer actually pays.
       </p>
-      <p className="judge-note">
-        The campaign orchestrator. Campaigns tell the assistant what to suggest; they never mint a coupon, and the kernel still decides what the customer is charged.
+      <p className="page-help">
+        Campaigns tell the assistant what to suggest. They do not create coupons and cannot change
+        a price. Budget is only spent once a customer has paid.
       </p>
 
       <CreateCampaign skus={skus} />

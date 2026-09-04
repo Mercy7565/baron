@@ -114,8 +114,9 @@ export default function DemoPage() {
   return (
     <main >
       <h1>Lab</h1>
-      <p>
-        Asks for 15% on a ₹500 cart with 15% margin and a 10% floor. Expect CLAMP to the 5% rung.
+      <p className="page-help">
+        A test bench for the pricing rules. Each button sends a request straight to the money path
+        and shows the full response, including anything that was ignored.
       </p>
 
       <button

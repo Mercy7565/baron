@@ -1053,9 +1053,9 @@
 }
 [data-surface="stage"] .lg-demo p { margin: 10px 0 0; opacity: 0.72; }
 
-/* The small line under each console/shop heading explaining why the screen
-   exists. Muted on purpose: it is for a judge, not for daily use. */
-.judge-note {
+/* The quiet line under a page title: what this screen is, and how it works.
+   Muted on purpose - it is help, not part of the argument. */
+.page-help {
   font-size: 12.5px; line-height: 1.6; margin: -4px 0 16px;
   opacity: 0.66; max-width: 74ch;
 }

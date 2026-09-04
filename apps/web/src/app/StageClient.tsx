@@ -96,7 +96,7 @@ export function StageClient({ signedInAs = null }: { signedInAs?: Role | null })
       </div>
 
       <div className="sg-foot">
-        {/* The protocol page is for a judge or an engineer, not a shopper or a
+        {/* The protocol page is for someone integrating, not for a shopper or a
             merchant, so it hangs off the role screen rather than sitting in
             either console's navigation. */}
         <a className="sg-protocols" href="/protocols">

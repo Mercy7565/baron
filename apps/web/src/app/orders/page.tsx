@@ -118,9 +118,9 @@ export default async function OrdersPage({
         An order appears under Paid once Razorpay confirms the payment — not when the link is
         created.
       </p>
-      <p className="judge-note">
-        This page reads the Razorpay account, not a local file. Paid means Razorpay says a payment
-        was captured; the local log only adds what the basket contained.
+      <p className="page-help">
+        Paid orders are read from Razorpay, so they stay here once a payment goes through. Unpaid
+        holds baskets you have priced but not paid for.
       </p>
 
       {!ledger.live && (

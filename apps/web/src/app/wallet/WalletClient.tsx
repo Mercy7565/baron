@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { WALLET_JUDGE_NOTE } from "@/lib/copy";
+import { WALLET_NOTE } from "@/lib/copy";
 
 interface CardOnFile {
   display: string;
@@ -72,7 +72,7 @@ export function WalletClient({
             {fine}
           </p>
         </div>
-        <p className="judge-note">{WALLET_JUDGE_NOTE}</p>
+        <p className="page-help">{WALLET_NOTE}</p>
         <a className="st-btn st-btn--quiet ag-selfstart" href="/shop">
           Go shopping
         </a>

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * The instructions a judge pastes into a Custom GPT.
+ * The instructions pasted into a Custom GPT.
  *
  * The first four lines are the whole policy; everything after them is
  * operational detail for the six Actions. They are written as prohibitions
@@ -50,10 +50,10 @@ export default function ConnectAiPage() {
         A Custom GPT can search this store, price a basket and hand you a payment link — and cannot
         move a rupee the kernel has not already agreed to.
       </p>
-      <p className="judge-note">
-        Custom GPT Actions against a public HTTPS API. Not official ChatGPT Shopping, and not
-        presented as it. The model never receives a card number, a CVV, a one-time code, a Razorpay
-        secret or the contents of a wallet, because no endpoint here puts one in a response.
+      <p className="page-help">
+        Connect ChatGPT with a shop code. It can search and request a buy. It cannot set the price
+        or invent a product. You confirm. Razorpay takes payment. The assistant never sees the
+        card. This uses Custom GPT Actions, not official ChatGPT Shopping.
       </p>
 
       {isLocal && (
@@ -118,42 +118,31 @@ export default function ConnectAiPage() {
       </div>
 
       <div className="st-card" style={{ marginTop: 20, maxWidth: 780 }}>
-        <h2>The part worth filming</h2>
-        <p className="st-muted" style={{ marginTop: 0 }}>
-          Ask the GPT for a discount it has not earned, or let it state a price before it has
-          quoted. Then watch what the store does with that:
-        </p>
-        <ol className="st-beats">
+        <h2>What the GPT can and cannot do</h2>
+        <ul className="st-beats">
           <li>
-            <strong>It asks for 25%.</strong> <code>requested_discount_bps: 2500</code> goes in as a
-            request, not an instruction.
+            It searches only the shop whose code you gave it. If nothing matches it says so, rather
+            than offering something else.
           </li>
           <li>
-            <strong>The kernel clamps it to 11%.</strong> <code>verdict: CLAMP</code>, and{" "}
-            <code>applied_bps</code> is the number the model is allowed to repeat. The rung is
-            chosen from the ask, the minimum cart and the merchant&rsquo;s margin floor.
+            It can ask for a discount, but the store decides. It may be reduced, and the GPT can
+            only repeat the discount it was actually granted.
           </li>
           <li>
-            <strong>It says the total is ₹500.</strong> That figure travels as{" "}
-            <code>spoken_total</code>, comes back{" "}
-            <code>honoured: false</code>, and changes nothing. The catalog and the kernel set the
-            price.
+            A price it states on its own is ignored. The total comes from the catalog and the
+            store&rsquo;s rules.
           </li>
           <li>
-            <strong>It asks for a product that does not exist.</strong>{" "}
-            <code>confident_match</code> is null and no near match is substituted, so there is no
-            quote and nothing to pay for.
+            It hands you a Razorpay link. Nothing is charged until you pay it, and the order shows
+            as paid only once Razorpay confirms.
           </li>
           <li>
-            <strong>It gets a link, not a charge.</strong> <code>paid: false</code>. A Payment Link
-            is an invitation; it becomes revenue only when Razorpay says a payment was captured.
+            It never receives a card number, a CVV or a one-time code, and it is told never to ask
+            for one.
           </li>
-        </ol>
-        <p className="st-muted" style={{ fontSize: 14, marginBottom: 0 }}>
-          What it never gets: a card number, a CVV, a one-time code, an API secret, or a wallet.
-          Those are not withheld by a filter — they are never assembled into a response.
-        </p>
+        </ul>
       </div>
+
     </StoreChrome>
   );
 }

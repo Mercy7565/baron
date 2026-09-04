@@ -18,9 +18,9 @@ export default function CartPage() {
     <StoreChrome>
       <h1>Your basket</h1>
       <p className="st-lede">Your coupon is applied at checkout, based on what is in your bag.</p>
-      <p className="judge-note">
-        The coupon is chosen by the kernel from the whole bag — the ask, the minimum cart, and the
-        merchant&rsquo;s margin floor. Nothing on this page can talk it higher.
+      <p className="page-help">
+        Your coupon is worked out from the whole basket, so it can change as you add or remove
+        items. The total you see here is the total you pay.
       </p>
       <CartClient />
     </StoreChrome>

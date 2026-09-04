@@ -59,10 +59,9 @@ export default async function MerchantOrders({
         Paid and awaiting are kept apart on purpose. An issued Payment Link is not revenue until
         Razorpay reports a payment against it.
       </p>
-      <p className="judge-note">
-        Read from the Razorpay account, not from a local file. Every paid row here is a captured
-        payment id you can find in the Razorpay dashboard; the local log only adds what the basket
-        contained, and a row survives without it.
+      <p className="page-help">
+        Every paid row carries a payment id you can look up in your Razorpay dashboard. Awaiting
+        holds links that have been sent but not paid.
       </p>
 
       {!ledger.live && (
