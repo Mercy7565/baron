@@ -17,10 +17,19 @@ suggests SKUs already linked in the catalog — scored by how much *legal*
 discount each would unlock. Ask for 15% on a basket that supports 2%, and you
 get 2%.
 
-**Sellable to any AI.** One public endpoint, `POST /api/agent/shop`, takes a
-shopper's intent, asks at most one yes/no question, and returns a real Razorpay
-**Payment Link**. An outside agent needs no SDK, no cookie and no account. The
-OpenAPI schema is served at `/api/agent/openapi.yaml`.
+**Sellable to any AI.** A **Custom GPT** shops a Baron store through six
+Actions — resolve a shop code, search, get a product, quote, re-read a quote,
+and turn it into a real Razorpay **Payment Link**. An outside agent needs no
+SDK, no cookie and no account. The OpenAPI schema is served at
+`/.well-known/openai-openapi.yaml`; the older two-round endpoint
+`POST /api/agent/shop` still works and keeps its schema at
+`/api/agent/openapi.yaml`.
+
+The model never receives a card number, a CVV, a one-time code, a Razorpay
+secret or the contents of a wallet — not because a filter strips them, but
+because no endpoint on that surface ever puts one in a response. A price the
+model states is recorded as `spoken_total` and ignored; the catalog and the
+kernel decide what is owed.
 
 The gap neither half closes on its own: ACP and UCP handle checkout and
 discovery, AP2 handles user mandates, x402 handles machine settlement. **None of
@@ -46,7 +55,7 @@ them is a merchant-side gate an agent cannot talk its way past.** That is this.
 | Not implemented | Why |
 | --- | --- |
 | **Server-to-server card charge** | `POST /v1/payments/create/json` returns 404 on this account. There is no headless card API here, so the buyer completes the Payment Link. |
-| **Official ChatGPT Shopping** | No partnership, no listing. Just an HTTP API a custom Action can import. |
+| **Official ChatGPT Shopping** | No partnership, no listing, no merchant feed. What *is* built is **Custom GPT Actions**: a GPT imports `/.well-known/openai-openapi.yaml` and calls a public HTTPS API. Different thing, similar name. |
 | **NPCI UAP** | No integration exists in this build. |
 | **AP2 credentials / FIDO** | Mandates are hashed and chained, not attested. "AP2-**shaped**". |
 | **on-chain x402** | 402 is used as a status code. No chain, no token, no facilitator. |

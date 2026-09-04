@@ -175,9 +175,21 @@ export default function ProtocolsPage() {
               <td>402 is a status code here. No chain, no token, no facilitator.</td>
             </tr>
             <tr>
+              <td>Custom GPT Actions</td>
+              <td className="cs-ok">implemented</td>
+              <td>
+                Six actions at <code>/.well-known/openai-openapi.yaml</code>. A GPT resolves a shop
+                code, searches, quotes and gets a Payment Link — and never receives a card number,
+                a CVV, a one-time code or a wallet.
+              </td>
+            </tr>
+            <tr>
               <td>Official ChatGPT Shopping</td>
               <td className="cs-danger">not implemented</td>
-              <td>No partnership and no listing. An HTTP API a custom Action can call.</td>
+              <td>
+                No partnership, no listing, no merchant feed. The line above is a Custom GPT
+                importing an OpenAPI schema, which is a different thing wearing a similar name.
+              </td>
             </tr>
             <tr>
               <td>S2S card capture</td>

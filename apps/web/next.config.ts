@@ -42,6 +42,10 @@ const nextConfig: NextConfig = {
     return [
       { source: "/.well-known/countersign.json", destination: "/well-known/countersign.json" },
       { source: "/.well-known/ucp", destination: "/well-known/ucp" },
+      {
+        source: "/.well-known/openai-openapi.yaml",
+        destination: "/well-known/openai-openapi.yaml",
+      },
     ];
   },
   // Internal packages ship TypeScript source with no build step, so Next has

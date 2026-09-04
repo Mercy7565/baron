@@ -145,9 +145,24 @@ describe("the pasted GPT instructions cannot drift from the docs", () => {
     expect(norm(quoted)).toContain(norm(block));
   });
 
-  it("never tells the model a link exists before one is generated", () => {
-    expect(block).toContain("ready_to_generate");
+  it("never tells the model a payment has happened", () => {
+    // The six-action surface has no status the model repeats; what it must
+    // never do is imply the link is a receipt. pay_quote returns paid: false
+    // for exactly this reason, and the instructions have to say so too.
+    expect(block).toContain("not a receipt");
     expect(block).not.toContain("ready_to_pay");
+  });
+
+  it("forbids asking for a payment credential, in those words", () => {
+    // The single most important sentence on the page: a shopper who is asked
+    // for a CVV by a chatbot has already been phished, whatever happens next.
+    expect(block).toContain("Never ask for a card number");
+    expect(block.toLowerCase()).toContain("cvv");
+    expect(block.toLowerCase()).toContain("one-time code");
+  });
+
+  it("says plainly that this is not official ChatGPT Shopping", () => {
+    expect(block).toContain("not official ChatGPT Shopping");
   });
 
   it("names Baron, never the old brand", () => {

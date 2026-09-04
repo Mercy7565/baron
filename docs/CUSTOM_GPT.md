@@ -1,126 +1,116 @@
 # Baron as a Custom GPT
 
-A Custom GPT can shop Baron end to end: the shopper says what they want,
-the GPT asks at most one yes/no question, and hands back a Razorpay payment
-link. The GPT never sees a card number or a one-time code, because Baron
-never sends them and never needs them.
+A Custom GPT shops a Baron store through six Actions: it resolves a shop code,
+searches the catalog, prices a basket, and turns an agreed price into a Razorpay
+Payment Link. The GPT never sees a card number, a CVV, a one-time code, a
+Razorpay secret or the contents of a wallet - not because a filter strips them,
+but because no endpoint on this surface ever puts one in a response.
 
 **This is not official ChatGPT Shopping.** There is no partnership, no listing,
-no certification. It is a plain HTTP API imported as a custom Action.
+no merchant feed, no certification. It is a plain HTTPS API imported as a custom
+Action, which is a different thing wearing a similar name.
 
 ## Before you start
 
 The GPT runs on OpenAI's servers, so `localhost` is unreachable. Deploy first,
-then use the deployed origin as `{BASE}` everywhere below.
-
-Set `RESUME_SECRET` in the deployment's environment. The two-round token is
-signed with it and carries its own state, so round 2 works even when it lands on
-a different serverless instance than round 1. Any value works as long as every
-instance shares it.
+then use the deployed origin as `{BASE}` everywhere below. The live demo is
+`https://baron-shop.vercel.app`.
 
 ## Setup on chatgpt.com
 
-1. **Create a GPT** — chatgpt.com → your name → *My GPTs* → *Create a GPT* →
+1. **Create a GPT** - chatgpt.com -> your name -> *My GPTs* -> *Create a GPT* ->
    *Configure*.
-2. **Add the Action** — scroll to *Actions* → *Create new action* → *Import from
-   URL*, and paste:
+2. **Add the Actions** - scroll to *Actions* -> *Create new action* -> *Import
+   from URL*, and paste:
 
    ```
-   {BASE}/api/agent/openapi.yaml
+   {BASE}/.well-known/openai-openapi.yaml
    ```
 
-   One operation appears: `shopBaron`.
-3. **Authentication** — leave as **None**. The API is public; money is gated by
-   the mandate and the kernel, not by an API key.
+   Six operations appear: `resolve_shop_code`, `search_catalog`, `get_product`,
+   `create_quote`, `get_quote`, `pay_quote`.
+3. **Authentication** - *API Key*, Auth Type *Custom*, header name
+   `x-baron-shopper`, value `aryan`. This is demo identity only: it maps the GPT
+   to the built-in demo customer so its orders appear in that account's Orders
+   page. Money is gated by the mandate and the kernel, never by this header, and
+   an unrecognised value simply shops as the shared demo buyer.
 4. **Paste the instructions** below into the GPT's *Instructions* box.
-5. **Test** in the preview pane: *"buy me niacinamide from Baron"*.
+5. **Test** in the preview pane: *"shop code BARON-SKIN, buy me niacinamide"*.
 
 ## Instructions to paste
 
-> You shop at Baron. Never ask for card numbers, CVVs, OTPs or any payment
-> credential — Baron handles payment itself and will never send you one.
+These are the same words the /connect-ai page hands you, and a test keeps the
+two identical.
+
+> You shop Baron stores. Always resolve the shop code first.
+> Never invent a price or SKU. Never ask for a card.
+> If the user says buy X, search, quote, show legal_total, then pay only after they say yes.
 >
-> When the user wants to buy something, call `shopBaron` with
-> `intent_text` set to what they asked for.
+> How to use the Actions:
 >
-> If the response `status` is `need_upsell_decision`, show the shopper
-> `suggestion.message` and ask them a single yes or no question. Do not add
-> anything to the basket yourself and do not ask anything else. When they
-> answer, call `shopBaron` again with the `resume_token` from the previous
-> response and `accept_upsell` set to true or false.
+> 1. resolve_shop_code — call this before anything else, every conversation. If the shopper has not given you a code, ask for one. The demo store is BARON-SKIN. If the code returns 404, tell them it did not work and ask again. Never guess a code.
 >
-> If the response `status` is `ready_to_generate`, show the total
-> (`legal_total_paise` divided by 100, in rupees) and the coupon that policy
-> allowed (`applied_bps` divided by 100, as a percentage). Then tell the shopper
-> to open `generate_url` to create their payment link. There is no link yet and
-> you must not imply there is one.
+> 2. search_catalog — pass the shopper's own words. Use confident_match. If confident_match is null, this shop does not sell that: say so and stop. Do not offer a product from results that the shopper did not ask for.
 >
-> If `status` is `not_found`, tell the shopper the product was not found and do
-> not suggest a substitute. If `status` is `refused`, say the store's policy
-> declined the basket and give the `reason`.
+> 3. get_product — optional, when the shopper wants detail before deciding.
 >
-> If `verdict` is `CLAMP`, you may mention that the store's policy reduced the
-> discount to `applied_bps` basis points. Never claim a discount that is not in
-> `applied_bps`.
+> 4. create_quote — the only place a price comes from. Send the sku_id from confident_match. Show the shopper legal_total_inr and nothing else as the price. If you already said a number out loud, pass it as spoken_total and then correct yourself: it is recorded and ignored. If verdict is CLAMP, the store reduced the discount — you may say so, and you may never claim a discount other than applied_bps.
 >
-> This is not official ChatGPT Shopping. It is a demo store on Razorpay test
-> mode.
+> 5. get_quote — use if the conversation paused and you need to check the price still stands. If it is expired, quote again and tell the shopper the new number.
+>
+> 6. pay_quote — only after the shopper has seen the total and said yes. Give them short_url. Nothing is paid yet: the link is an invitation, not a receipt.
+>
+> Never ask for a card number, a CVV, an expiry date or a one-time code. You will never be given one and you cannot take a payment. The shopper pays on Razorpay's own page, which you cannot see.
+>
+> This is a Custom GPT using Actions against a demo store on Razorpay test mode. It is not official ChatGPT Shopping.
 
-## The contract
+## The actions
 
-**Round 1**
+| Action | Method and path | What it is for |
+| --- | --- | --- |
+| `resolve_shop_code` | `POST /api/gpt/shop-code` | Name the shop. Required before anything else; an unknown code is a 404 with no fallback store. |
+| `search_catalog` | `GET /api/gpt/search` | Find products. `confident_match` is null when nothing really matches - that means "not sold here", not "pick the closest". |
+| `get_product` | `GET /api/gpt/product` | One product by `sku_id`. No margin, no cost. |
+| `create_quote` | `POST /api/gpt/quote` | The only place a total is decided. |
+| `get_quote` | `GET /api/gpt/quote/{quoteId}` | Read a price back. An expired quote says so rather than re-pricing itself. |
+| `pay_quote` | `POST /api/gpt/pay` | Turn an agreed quote into a Payment Link. Captures nothing. |
 
-```json
-{ "intent_text": "buy me niacinamide" }
-```
+## What a spoken price is worth
 
-**Round 2**
+`create_quote` accepts `spoken_total`: any figure the model already said out
+loud. It is echoed back as `honoured: false` and plays no part in the
+arithmetic. A model that has told a shopper "that'll be 500 rupees" has an
+obvious incentive to make the bill agree, and an agent that could assert its own
+price would make every other guarantee here decorative.
 
-```json
-{ "resume_token": "rt_…", "accept_upsell": true }
-```
+`requested_discount_bps` is an ask, not an instruction. The kernel answers
+`ALLOW`, or `CLAMP` when it reduced the discount to what the basket actually
+qualifies for. `applied_bps` is the only discount the model may repeat.
 
-`status` is one of:
-
-| status | what the GPT should do |
-| --- | --- |
-| `need_upsell_decision` | Show `suggestion.message`, ask yes/no, call again with `resume_token` |
-| `ready_to_pay` | Show **only** `short_url` and the rupee total |
-| `not_found` | Say it was not found. No substitutes. |
-| `refused` | Say policy declined, give `reason` |
-
-`ready_to_pay` carries `short_url`, `payment_link_id`, `legal_total_paise`,
-`verdict` and `applied_bps`.
-
-## resume_token
-
-Signed with HMAC-SHA256 over its own payload — the intent, the basket lines, the
-suggestions and an expiry. There is no server-side session to lose, so round 2
-works across instances. It expires **15 minutes** after round 1; after that the
-API answers `410` with `status: "expired"` and the GPT should start again.
-
-## curl — local
+## curl - the whole flow
 
 ```bash
-curl -s -X POST http://localhost:3000/api/agent/shop -H "content-type: application/json" -d '{"intent_text":"buy me niacinamide"}'
+BASE=https://baron-shop.vercel.app
+H='x-baron-shopper: aryan'
+
+curl -s -X POST "$BASE/api/gpt/shop-code" -H "$H" -H 'content-type: application/json'   -d '{"code":"BARON-SKIN"}'
+
+curl -s "$BASE/api/gpt/search?q=niacinamide&shop_code=BARON-SKIN" -H "$H"
+
+curl -s -X POST "$BASE/api/gpt/quote" -H "$H" -H 'content-type: application/json'   -d '{"shop_code":"BARON-SKIN","sku_lines":[{"sku_id":"sku_serum_niacin_30","qty":2}],"requested_discount_bps":2500,"spoken_total":50000}'
+
+curl -s -X POST "$BASE/api/gpt/pay" -H "$H" -H 'content-type: application/json'   -d '{"quote_id":"PASTE_QUOTE_ID"}'
 ```
 
-```bash
-curl -s -X POST http://localhost:3000/api/agent/shop -H "content-type: application/json" -d '{"resume_token":"PASTE_TOKEN","accept_upsell":true}'
-```
+## The older two-round endpoint
 
-## curl — after deploy
-
-```bash
-curl -s -X POST https://YOUR_HOST/api/agent/shop -H "content-type: application/json" -d '{"intent_text":"buy me niacinamide"}'
-```
-
-```bash
-curl -s -X POST https://YOUR_HOST/api/agent/shop -H "content-type: application/json" -d '{"resume_token":"PASTE_TOKEN","accept_upsell":true}'
-```
+`POST /api/agent/shop` still works and keeps its own schema at
+`/api/agent/openapi.yaml`. It takes an intent, asks at most one yes/no question,
+and stops at a quote. The six-action surface above supersedes it for new GPTs
+because each step is separately inspectable, which is the part worth showing.
 
 ## What the merchant side does not expose
 
-The merchant console — catalog, campaign budgets, orchestrator, audit — is
+The merchant console - catalog, campaign budgets, orchestrator, audit - is
 website-only and sits behind a merchant session. The GPT surface is the customer
 half and nothing else.
