@@ -102,11 +102,11 @@ Offer ladder (dashboard-created, hardcoded because `GET /offers` is unusable):
 
 | Discount | Offer id |
 | --- | --- |
-| 2% | `offer_TVGA5zBFGxtmTk` |
-| 5% | `offer_TVGCPhnzBPaP1Q` |
-| 8% | `offer_TVGEG4clW17CPr` |
-| 11% | `offer_TVGGTIycymL77F` |
-| 15% | `offer_TVGHnR32wQf0ZL` |
+| 2% | `offer_TXuWY6xddeXxVe` |
+| 5% | `offer_TXuXqoGAWqOZHA` |
+| 8% | `offer_TXuZNylUfodChM` |
+| 11% | `offer_TXuanzMIxTBH9p` |
+| 15% | `offer_TXuc8SQ7e1mTBO` |
 
 ## Day 2 findings (first money path)
 

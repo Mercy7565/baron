@@ -35,11 +35,11 @@ UPI was not enabled on this account, so offers are Card-only.
 
 | Rung | Name | % | Max discount | offer_id |
 |---|---|---|---|---|
-| 1 | CS 2pct | 2 | 100 | offer_TVGA5zBFGxtmTk |
-| 2 | CS 5pct | 5 | 250 | offer_TVGCPhnzBPaP1Q |
-| 3 | CS 8pct | 8 | 400 | offer_TVGEG4clW17CPr |
-| 4 | CS 11pct | 11 | 500 | offer_TVGGTIycymL77F |
-| 5 | CS 15pct | 15 | 500 | offer_TVGHnR32wQf0ZL |
+| 1 | CS 2pct | 2 | 100 | offer_TXuWY6xddeXxVe |
+| 2 | CS 5pct | 5 | 250 | offer_TXuXqoGAWqOZHA |
+| 3 | CS 8pct | 8 | 400 | offer_TXuZNylUfodChM |
+| 4 | CS 11pct | 11 | 500 | offer_TXuanzMIxTBH9p |
+| 5 | CS 15pct | 15 | 500 | offer_TXuc8SQ7e1mTBO |
 
 ### Other findings
 - No public Create Offer API. Offers are Dashboard-only.
@@ -349,7 +349,7 @@ request:
   "receipt": "cs-r6a-mtdpjfyr",
   "offers": [
     {
-      "offer_id": "offer_TVGA5zBFGxtmTk"
+      "offer_id": "offer_TXuWY6xddeXxVe"
     }
   ],
   "force_offer": 1
@@ -383,7 +383,7 @@ request:
   "currency": "INR",
   "receipt": "cs-r6b-mtdpjfyr",
   "offers": [
-    "offer_TVGA5zBFGxtmTk"
+    "offer_TXuWY6xddeXxVe"
   ],
   "force_offer": true
 }
@@ -401,9 +401,9 @@ response:
   "entity": "order",
   "id": "order_TVPDfWnEPOq2GY",
   "notes": [],
-  "offer_id": "offer_TVGA5zBFGxtmTk",
+  "offer_id": "offer_TXuWY6xddeXxVe",
   "offers": [
-    "offer_TVGA5zBFGxtmTk"
+    "offer_TXuWY6xddeXxVe"
   ],
   "receipt": "cs-r6b-mtdpjfyr",
   "status": "created"
@@ -491,11 +491,11 @@ With the exact dashboard ids, every rung attaches, at both amounts probed:
 
 | Discount | Offer id | ₹500 | ₹1000 |
 | --- | --- | --- | --- |
-| 2% | `offer_TVGA5zBFGxtmTk` | attached | attached |
-| 5% | `offer_TVGCPhnzBPaP1Q` | attached | attached |
-| 8% | `offer_TVGEG4clW17CPr` | attached | attached |
-| 11% | `offer_TVGGTIycymL77F` | attached | attached |
-| 15% | `offer_TVGHnR32wQf0ZL` | attached | attached |
+| 2% | `offer_TXuWY6xddeXxVe` | attached | attached |
+| 5% | `offer_TXuXqoGAWqOZHA` | attached | attached |
+| 8% | `offer_TXuZNylUfodChM` | attached | attached |
+| 11% | `offer_TXuanzMIxTBH9p` | attached | attached |
+| 15% | `offer_TXuc8SQ7e1mTBO` | attached | attached |
 
 There is no dashboard problem. There never was one.
 

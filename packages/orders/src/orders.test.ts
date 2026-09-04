@@ -32,7 +32,7 @@ const order = (over: Partial<Order> = {}): Order => ({
   amount_paise: 204_060,
   asked_bps: 1500,
   applied_bps: 500,
-  offer_id: "offer_TXZFaRi7PFRQyz",
+  offer_id: "offer_TXuXqoGAWqOZHA",
   verdict: "CLAMP",
   lines: [{ sku_id: "sku_a", title: "A serum", qty: 1, line_total_paise: 204_060 }],
   status: "awaiting_payment",

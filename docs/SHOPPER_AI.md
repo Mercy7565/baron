@@ -60,7 +60,7 @@ round 2's answer below).
   "legal_total_paise": 204060,
   "verdict": "CLAMP",
   "applied_bps": 500,
-  "offer_id": "offer_TVGCPhnzBPaP1Q",
+  "offer_id": "offer_TXuXqoGAWqOZHA",
   "razorpay_order_id": "order_…",
   "upsell_accepted": true
 }

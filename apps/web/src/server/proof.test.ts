@@ -51,13 +51,13 @@ describe("the margin floor decides how far up the ladder a basket reaches", () =
 
   it("gives each of the four reference baskets the coupon it has earned", () => {
     const cases: Array<[string[], number, string]> = [
-      [["sku_spf_fluid_50"], 500, "offer_TXZFaRi7PFRQyz"],
-      [["sku_serum_niacin_30"], 700, "offer_TXZHijNccBb2uo"],
-      [["sku_serum_niacin_30", "sku_serum_vitc_30"], 1500, "offer_TXZLlwmKPCba4H"],
+      [["sku_spf_fluid_50"], 500, "offer_TXuXqoGAWqOZHA"],
+      [["sku_serum_niacin_30"], 700, "offer_TXuZNylUfodChM"],
+      [["sku_serum_niacin_30", "sku_serum_vitc_30"], 1500, "offer_TXuc8SQ7e1mTBO"],
       [
         ["sku_serum_niacin_30", "sku_serum_vitc_30", "sku_moist_light_50"],
         2000,
-        "offer_TXZNRbvkOLZbd1",
+        "offer_TXudQjjRCRnoXQ",
       ],
     ];
 

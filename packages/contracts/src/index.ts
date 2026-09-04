@@ -63,13 +63,13 @@ export type OfferRung = z.infer<typeof OfferRungSchema>;
  * does not.
  */
 export const OFFER_LADDER: readonly OfferRung[] = [
-  { discount_bps: 200, offer_id: "offer_TXZDq8aiNzKnQA", min_cart_paise: 10_000, max_discount_paise: 15_000 },
-  { discount_bps: 500, offer_id: "offer_TXZFaRi7PFRQyz", min_cart_paise: 50_000, max_discount_paise: 40_000 },
-  { discount_bps: 700, offer_id: "offer_TXZHijNccBb2uo", min_cart_paise: 80_000, max_discount_paise: 50_000 },
-  { discount_bps: 1100, offer_id: "offer_TXZJgaeRd1v3mr", min_cart_paise: 120_000, max_discount_paise: 80_000 },
-  { discount_bps: 1500, offer_id: "offer_TXZLlwmKPCba4H", min_cart_paise: 180_000, max_discount_paise: 100_000 },
-  { discount_bps: 2000, offer_id: "offer_TXZNRbvkOLZbd1", min_cart_paise: 250_000, max_discount_paise: 120_000 },
-  { discount_bps: 2500, offer_id: "offer_TXZP41NWz80tgL", min_cart_paise: 350_000, max_discount_paise: 150_000 },
+  { discount_bps: 200, offer_id: "offer_TXuWY6xddeXxVe", min_cart_paise: 10_000, max_discount_paise: 15_000 },
+  { discount_bps: 500, offer_id: "offer_TXuXqoGAWqOZHA", min_cart_paise: 50_000, max_discount_paise: 40_000 },
+  { discount_bps: 700, offer_id: "offer_TXuZNylUfodChM", min_cart_paise: 80_000, max_discount_paise: 50_000 },
+  { discount_bps: 1100, offer_id: "offer_TXuanzMIxTBH9p", min_cart_paise: 120_000, max_discount_paise: 80_000 },
+  { discount_bps: 1500, offer_id: "offer_TXuc8SQ7e1mTBO", min_cart_paise: 180_000, max_discount_paise: 100_000 },
+  { discount_bps: 2000, offer_id: "offer_TXudQjjRCRnoXQ", min_cart_paise: 250_000, max_discount_paise: 120_000 },
+  { discount_bps: 2500, offer_id: "offer_TXueiFQ59z3ARk", min_cart_paise: 350_000, max_discount_paise: 150_000 },
 ] as const;
 
 // ----------------------------------------------------------------- reasoning

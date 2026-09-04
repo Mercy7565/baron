@@ -13,13 +13,13 @@ import {
  * kernel itself. Same seven rungs, same minimums and caps.
  */
 const LADDER = [
-  { discount_bps: 200, offer_id: "offer_TXZDq8aiNzKnQA", min_cart_paise: 10_000, max_discount_paise: 15_000 },
-  { discount_bps: 500, offer_id: "offer_TXZFaRi7PFRQyz", min_cart_paise: 50_000, max_discount_paise: 40_000 },
-  { discount_bps: 700, offer_id: "offer_TXZHijNccBb2uo", min_cart_paise: 80_000, max_discount_paise: 50_000 },
-  { discount_bps: 1100, offer_id: "offer_TXZJgaeRd1v3mr", min_cart_paise: 120_000, max_discount_paise: 80_000 },
-  { discount_bps: 1500, offer_id: "offer_TXZLlwmKPCba4H", min_cart_paise: 180_000, max_discount_paise: 100_000 },
-  { discount_bps: 2000, offer_id: "offer_TXZNRbvkOLZbd1", min_cart_paise: 250_000, max_discount_paise: 120_000 },
-  { discount_bps: 2500, offer_id: "offer_TXZP41NWz80tgL", min_cart_paise: 350_000, max_discount_paise: 150_000 },
+  { discount_bps: 200, offer_id: "offer_TXuWY6xddeXxVe", min_cart_paise: 10_000, max_discount_paise: 15_000 },
+  { discount_bps: 500, offer_id: "offer_TXuXqoGAWqOZHA", min_cart_paise: 50_000, max_discount_paise: 40_000 },
+  { discount_bps: 700, offer_id: "offer_TXuZNylUfodChM", min_cart_paise: 80_000, max_discount_paise: 50_000 },
+  { discount_bps: 1100, offer_id: "offer_TXuanzMIxTBH9p", min_cart_paise: 120_000, max_discount_paise: 80_000 },
+  { discount_bps: 1500, offer_id: "offer_TXuc8SQ7e1mTBO", min_cart_paise: 180_000, max_discount_paise: 100_000 },
+  { discount_bps: 2000, offer_id: "offer_TXudQjjRCRnoXQ", min_cart_paise: 250_000, max_discount_paise: 120_000 },
+  { discount_bps: 2500, offer_id: "offer_TXueiFQ59z3ARk", min_cart_paise: 350_000, max_discount_paise: 150_000 },
 ];
 
 const LADDER_IDS = LADDER.map((r) => r.offer_id);
@@ -62,7 +62,7 @@ describe("evaluate — allow", () => {
     expect(d.verdict).toBe("ALLOW");
     expect(d.applied_discount_bps).toBe(500);
     // Bare id strings + force_offer — the object form is a silent no-op.
-    expect(d.offer_ids).toEqual(["offer_TXZFaRi7PFRQyz"]);
+    expect(d.offer_ids).toEqual(["offer_TXuXqoGAWqOZHA"]);
     expect(d.force_offer).toBe(true);
   });
 });
@@ -78,7 +78,7 @@ describe("evaluate — clamp", () => {
     expect(d.verdict).toBe("CLAMP");
     expect(d.requested_discount_bps).toBe(1500);
     expect(d.applied_discount_bps).toBe(500);
-    expect(d.offer_ids).toEqual(["offer_TXZFaRi7PFRQyz"]);
+    expect(d.offer_ids).toEqual(["offer_TXuXqoGAWqOZHA"]);
     expect(d.force_offer).toBe(true);
     expect(d.reasons.code).toBe("clamp_to_rung");
   });
@@ -90,7 +90,7 @@ describe("evaluate — clamp", () => {
 
     expect(d.verdict).toBe("CLAMP");
     expect(d.applied_discount_bps).toBe(500);
-    expect(d.offer_ids).toEqual(["offer_TXZFaRi7PFRQyz"]);
+    expect(d.offer_ids).toEqual(["offer_TXuXqoGAWqOZHA"]);
   });
 
   it("clamps to zero when no rung survives the margin floor", () => {
@@ -133,7 +133,7 @@ describe("evaluate — reject", () => {
     const d = evaluate(
       proposal({
         product_ids: ["sku_blocked"],
-        requested_offer_id: "offer_TXZFaRi7PFRQyz",
+        requested_offer_id: "offer_TXuXqoGAWqOZHA",
         requested_discount_bps: 500,
       }),
       policy(),
@@ -159,7 +159,7 @@ describe("evaluate — injected input", () => {
 
     expect(d.verdict).toBe("CLAMP");
     // Never the attacker's id; only the 5% rung the policy actually allows.
-    expect(d.offer_ids).toEqual(["offer_TXZFaRi7PFRQyz"]);
+    expect(d.offer_ids).toEqual(["offer_TXuXqoGAWqOZHA"]);
     expect(d.applied_discount_bps).toBe(500);
     expect(d.ignored_inputs).toHaveLength(1);
     expect(d.ignored_inputs[0]).toContain("offer_ATTACKER123");
@@ -221,7 +221,7 @@ describe("evaluate — invariants", () => {
     expect(d.verdict).toBe("ESCALATE");
     expect(d.offer_ids).toEqual([]);
     expect(d.force_offer).toBe(false);
-    expect(d.reasons.detail.candidate_offer_id).toBe("offer_TXZFaRi7PFRQyz");
+    expect(d.reasons.detail.candidate_offer_id).toBe("offer_TXuXqoGAWqOZHA");
   });
 });
 
@@ -245,29 +245,29 @@ describe("coupon minimum cart", () => {
     );
 
     expect(d.applied_discount_bps).not.toBe(1100);
-    expect(d.offer_ids).not.toContain("offer_TXZJgaeRd1v3mr");
+    expect(d.offer_ids).not.toContain("offer_TXuanzMIxTBH9p");
     // 749 clears the 5% minimum of 500 but not the 7% minimum of 800.
     expect(d.applied_discount_bps).toBe(500);
-    expect(d.offer_ids).toEqual(["offer_TXZFaRi7PFRQyz"]);
+    expect(d.offer_ids).toEqual(["offer_TXuXqoGAWqOZHA"]);
     expect(d.verdict).toBe("CLAMP");
   });
 
   it("refuses every rung whose minimum cart the basket misses", () => {
     const cases: Array<[number, number, string | undefined]> = [
       [9_900, 0, undefined],            // under even the 2% minimum
-      [10_000, 200, "offer_TXZDq8aiNzKnQA"],
-      [49_900, 200, "offer_TXZDq8aiNzKnQA"],
-      [50_000, 500, "offer_TXZFaRi7PFRQyz"],
-      [79_900, 500, "offer_TXZFaRi7PFRQyz"],
-      [80_000, 700, "offer_TXZHijNccBb2uo"],
-      [119_900, 700, "offer_TXZHijNccBb2uo"],
-      [120_000, 1100, "offer_TXZJgaeRd1v3mr"],
-      [179_900, 1100, "offer_TXZJgaeRd1v3mr"],
-      [180_000, 1500, "offer_TXZLlwmKPCba4H"],
-      [249_900, 1500, "offer_TXZLlwmKPCba4H"],
-      [250_000, 2000, "offer_TXZNRbvkOLZbd1"],
-      [349_900, 2000, "offer_TXZNRbvkOLZbd1"],
-      [350_000, 2500, "offer_TXZP41NWz80tgL"],
+      [10_000, 200, "offer_TXuWY6xddeXxVe"],
+      [49_900, 200, "offer_TXuWY6xddeXxVe"],
+      [50_000, 500, "offer_TXuXqoGAWqOZHA"],
+      [79_900, 500, "offer_TXuXqoGAWqOZHA"],
+      [80_000, 700, "offer_TXuZNylUfodChM"],
+      [119_900, 700, "offer_TXuZNylUfodChM"],
+      [120_000, 1100, "offer_TXuanzMIxTBH9p"],
+      [179_900, 1100, "offer_TXuanzMIxTBH9p"],
+      [180_000, 1500, "offer_TXuc8SQ7e1mTBO"],
+      [249_900, 1500, "offer_TXuc8SQ7e1mTBO"],
+      [250_000, 2000, "offer_TXudQjjRCRnoXQ"],
+      [349_900, 2000, "offer_TXudQjjRCRnoXQ"],
+      [350_000, 2500, "offer_TXueiFQ59z3ARk"],
     ];
 
     for (const [amount, expectedBps, expectedId] of cases) {
@@ -301,7 +301,7 @@ describe("coupon minimum cart", () => {
     );
 
     expect(d.applied_discount_bps).toBe(200);
-    expect(d.offer_ids).toEqual(["offer_TXZDq8aiNzKnQA"]);
+    expect(d.offer_ids).toEqual(["offer_TXuWY6xddeXxVe"]);
     expect(d.verdict).toBe("CLAMP");
   });
 });
@@ -311,7 +311,7 @@ describe("coupon rupee cap", () => {
     // 25% of 10,000 rupees is 2,500 — the coupon caps it at 1,500.
     const rung = {
       discount_bps: 2500,
-      offer_id: "offer_TXZP41NWz80tgL",
+      offer_id: "offer_TXueiFQ59z3ARk",
       min_cart_paise: 350_000,
       max_discount_paise: 150_000,
     };

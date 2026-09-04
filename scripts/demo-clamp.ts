@@ -3,7 +3,7 @@
  *
  * The proposal asks for 15%. The cart carries 53% margin against a 48% floor,
  * so only 500 bps of headroom exists and at most 5% may be given away. The expected answer is a
- * CLAMP down to the 5% rung, offer_TVGCPhnzBPaP1Q — never the 15% offer.
+ * CLAMP down to the 5% rung, offer_TXuXqoGAWqOZHA — never the 15% offer.
  *
  * Needs the app running: pnpm dev
  * Run with: pnpm demo:clamp
@@ -13,7 +13,7 @@ const BASE_URL = process.env.CS_BASE_URL ?? "http://localhost:3000";
 const ENDPOINT = `${BASE_URL}/api/checkout/propose`;
 
 const EXPECTED_VERDICT = "CLAMP";
-const EXPECTED_OFFER_ID = "offer_TVGCPhnzBPaP1Q";
+const EXPECTED_OFFER_ID = "offer_TXuXqoGAWqOZHA";
 
 const proposal = {
   cart_id: "cart_clamp_demo",

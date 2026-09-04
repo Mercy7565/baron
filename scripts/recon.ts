@@ -238,7 +238,7 @@ const probes: Probe[] = [
     n: 6,
     title: "POST /orders — offers: [{ offer_id }] + force_offer",
     run: async () => {
-      const offerId = "offer_TVGA5zBFGxtmTk";
+      const offerId = "offer_TXuWY6xddeXxVe";
 
       // A 200 is not enough here: the order can come back with offers: null,
       // meaning the field was accepted and then silently dropped.
