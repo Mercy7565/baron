@@ -108,14 +108,23 @@ export async function POST(request: Request): Promise<Response> {
     .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
 
   if (existing !== undefined) {
+    /**
+     * The same shape the fresh branch returns.
+     *
+     * This used to answer `total_paise` and `coupon_bps` where the other branch
+     * answers `legal_total_paise` and `applied_bps` — one route with two
+     * shapes, so anything reading the amount got a number the first time and
+     * `undefined` on every repeat press.
+     */
     return Response.json({
       status: "ready_to_pay",
       quote_id: existing.quote_id,
       payment_link_id: existing.payment_link_id,
       short_url: existing.payment_link_short_url,
-      total_paise: existing.legal_total_paise,
-      coupon_bps: existing.applied_bps,
+      legal_total_paise: existing.legal_total_paise,
+      applied_bps: existing.applied_bps,
       offer_id: existing.offer_id,
+      verdict: existing.verdict,
       cart_fingerprint: fingerprint,
       idempotent_replay: true,
     });
