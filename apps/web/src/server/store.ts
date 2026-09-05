@@ -78,19 +78,41 @@ export function lastStoreError(): string | null {
   return lastError;
 }
 
+/**
+ * Which access mode this store uses.
+ *
+ * A Blob store is created as public or private and will not accept the other:
+ * asking for `public` on a private store fails outright, which is exactly what
+ * was happening — the write was rejected with "Cannot use public access on a
+ * private store" and, before the error was surfaced, that looked identical to
+ * nothing being saved.
+ *
+ * Private is the default assumption because it is the safer one, and because a
+ * merchant's campaign budget is not something to serve off a public URL.
+ * BARON_BLOB_ACCESS overrides it for a store that is genuinely public.
+ */
+function blobAccess(): "public" | "private" {
+  return process.env.BARON_BLOB_ACCESS === "public" ? "public" : "private";
+}
+
 async function blobRead<T>(key: string): Promise<T | null> {
   const t = token();
   if (t === null) return null;
 
   try {
-    const { head } = await import("@vercel/blob");
-    const meta = await head(`${key}.json`, { token: t });
+    const { get } = await import("@vercel/blob");
 
-    // `head` throws BlobNotFoundError when there is nothing there, which is a
+    // `get` is the read that works for a private store: a public URL fetch
+    // would be refused. It answers null when nothing is stored yet, which is a
     // normal empty store rather than a failure.
-    const doc = await fetch(meta.url, { cache: "no-store" });
-    if (!doc.ok) return null;
-    return (await doc.json()) as T;
+    const found = await get(`${key}.json`, {
+      access: blobAccess(),
+      token: t,
+      useCache: false,
+    });
+    if (found === null || found.statusCode !== 200) return null;
+
+    return (await new Response(found.stream).json()) as T;
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     // A first read on an empty store is expected, not an error worth showing.
@@ -106,7 +128,7 @@ async function blobWrite(key: string, value: unknown): Promise<boolean> {
   try {
     const { put } = await import("@vercel/blob");
     await put(`${key}.json`, JSON.stringify(value), {
-      access: "public",
+      access: blobAccess(),
       token: t,
       contentType: "application/json",
       // One record with one current value, not an append-only upload: a fixed
