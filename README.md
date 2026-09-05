@@ -1,163 +1,105 @@
 # Baron
 
-**Baron is a merchant-side control plane for agent commerce: an AI can shop, negotiate and check out on this store, and a deterministic kernel decides what money may actually move before anything reaches Razorpay.**
+Razorpay Buildathon — Track 1: AI Growth & Agentic Commerce.
 
-> Tired of tapping checkout? Say it. We still won't let the model set the price.
-> Agents welcome. Unbounded discounts are not.
+Baron is a merchant store an AI buyer can shop end to end, on Razorpay Test
+Mode. A payment kernel sits in front of every rupee. Price comes from the
+catalog. Coupons come from a ladder the merchant already registered in Razorpay.
+The model can talk. It cannot set the bill.
 
-Razorpay AI Buildathon — Track 01. Everything below is on Razorpay **Test mode**.
+## Why
 
----
+If an agent buys for a human it will invent a SKU, demand 25% off, or try to pay
+₹1. The merchant loses margin or the sale dies. Baron makes the store
+traversable by an agent and keeps every money action explainable, bounded, and
+gated.
 
-## Quick start
+## Live
 
-```bash
-pnpm install
-cp .env.example .env      # fill in your Razorpay test keys
-pnpm dev                  # http://localhost:3000
-```
+- https://baron-shop.vercel.app
+- https://baron-shop.vercel.app/.well-known/openai-openapi.yaml
+
+## Customer demo
 
 | | |
 | --- | --- |
-| **Live demo** | https://baron-shop.vercel.app |
-| **Shop code** | `BARON-SKIN` — a shopper enters this to see the catalog |
-| **Sign in** | `merchant` / `merchant` for the console, `aryan` / `aryan` to shop |
-| **Test card** | `5267 3181 8797 5449`, any future expiry, any CVV |
-| **Custom GPT schema** | https://baron-shop.vercel.app/.well-known/openai-openapi.yaml |
-| **Webhook** | `POST /api/webhooks/razorpay`, signed with `RAZORPAY_WEBHOOK_SECRET` |
+| URL | https://baron-shop.vercel.app |
+| User id / email | `aryan` |
+| Password | `aryan` |
+| Shop code | `BARON-SKIN` |
+| Phone number | Any valid Indian number |
+| Test card | `5267 3181 8797 5449` |
+| OTP | `1234` |
+| Expiry | `08/31` |
+| CVV | `123` |
 
-`pnpm verify` runs the typecheck and the full test suite.
+1. Log in with the customer id and password above.
+2. Enter `BARON-SKIN`. Add a product. Refresh — cart stays.
+3. Wallet: save the test card. UI shows last4 only. Agent never sees PAN / CVV /
+   OTP.
+4. Pay now → Razorpay Payment Link → card + OTP → captured row in Razorpay
+   Payments.
+5. Assistant: real product name → adds catalog SKU.
+6. Assistant: "totally fake unicorn cream" → refuse, no Razorpay call.
+7. "25% off" or "make it ₹1" → catalog total wins; coupon is a dashboard offer,
+   not the spoken number.
+8. Orders: unpaid link can be cancelled. Paid order cannot.
 
-**Storage.** Campaigns, catalog edits and the margin floor are shared state, so
-they need somewhere durable. A laptop uses `.data/`. A deployment needs a Vercel
-Blob store connected to the project, which injects `BLOB_READ_WRITE_TOKEN`;
-without one the merchant console says on screen that its edits are not being
-saved rather than losing them quietly. Everything else either lives in the
-shopper's own signed cookie (basket, wallet reference, shop code) or is
-reconstructed from the Razorpay account (orders, payments, decisions).
+## Merchant demo
 
----
-
-## Track 01, both halves
-
-**Grow revenue.** A campaign console with real spend ceilings, an orchestrator
-that shows which campaign fires and why, and a ranked upsell that only ever
-suggests SKUs already linked in the catalog — scored by how much *legal*
-discount each would unlock. Ask for 15% on a basket that supports 2%, and you
-get 2%.
-
-**Sellable to any AI.** A **Custom GPT** shops a Baron store through six
-Actions — resolve a shop code, search, get a product, quote, re-read a quote,
-and turn it into a real Razorpay **Payment Link**. An outside agent needs no
-SDK, no cookie and no account. The OpenAPI schema is served at
-`/.well-known/openai-openapi.yaml`; the older two-round endpoint
-`POST /api/agent/shop` still works and keeps its schema at
-`/api/agent/openapi.yaml`.
-
-The model never receives a card number, a CVV, a one-time code, a Razorpay
-secret or the contents of a wallet — not because a filter strips them, but
-because no endpoint on that surface ever puts one in a response. A price the
-model states is recorded as `spoken_total` and ignored; the catalog and the
-kernel decide what is owed.
-
-The gap neither half closes on its own: ACP and UCP handle checkout and
-discovery, AP2 handles user mandates, x402 handles machine settlement. **None of
-them is a merchant-side gate an agent cannot talk its way past.** That is this.
-
----
-
-## What is REAL on Razorpay Test
-
-| Thing | Evidence |
+| | |
 | --- | --- |
-| **Orders** created via the API | one `createOrder` call site, real `order_…` ids |
-| **Offers attach** to those orders | `offers: ["offer_…"] + force_offer: true`, verified against a live order's `offers` array |
-| **Payment Links** created per purchase | real `plink_…` and `rzp.io` short URLs, visible in Dashboard → Payment Links |
-| **`/gate` reaches Captured** | Razorpay Checkout.js, human types the test card |
-| **Audit chain** | hash-chained JSONL; tamper one row and `/merchant/audit` says `CHAIN BROKEN AT seq=N` |
-| **Kernel** | 16 tests; zero imports, zero I/O, same inputs → same verdict forever |
-| **Campaign budgets burn** | issuing a link debits that campaign's `spent_paise`, clamped at its ceiling — the console shows real burn, not a seeded number |
-| **Health** | `GET /api/health` → `{ ok: true, settlement: "razorpay_payment_link" }` |
+| URL | https://baron-shop.vercel.app |
+| User id / email | `merchant` |
+| Password | `merchant` |
 
-## What is honestly NOT
+1. Log in with the merchant id and password above.
+2. Home tiles = live Razorpay counts.
+3. Catalog: change stock or price — survives refresh.
+4. Campaigns: create / pause with a spend ceiling. Upsell cannot exceed it.
+5. Audit: WHO, ASKED, ALLOWED, WHY, Razorpay id.
+6. Kernel cannot mint coupons — only pre-registered offer ids.
 
-| Not implemented | Why |
-| --- | --- |
-| **Server-to-server card charge** | `POST /v1/payments/create/json` returns 404 on this account. There is no headless card API here, so the buyer completes the Payment Link. |
-| **Official ChatGPT Shopping** | No partnership, no listing, no merchant feed. What *is* built is **Custom GPT Actions**: a GPT imports `/.well-known/openai-openapi.yaml` and calls a public HTTPS API. Different thing, similar name. |
-| **NPCI UAP** | No integration exists in this build. |
-| **AP2 credentials / FIDO** | Mandates are hashed and chained, not attested. "AP2-**shaped**". |
-| **on-chain x402** | 402 is used as a status code. No chain, no token, no facilitator. |
+## Wallet (today vs next)
 
-**Forging a Captured payment would be fraud.** This repo has no code path that
-can mint a `pay_…` id. A previous build had a headless payer that tried to drive
-the hosted page; it was always blocked, so it was deleted rather than faked.
+**Today:** token stand-in + last4. Agent never gets card data. Payment is hosted
+Razorpay Checkout / Payment Links because this account has no S2S card API.
 
----
+**When Razorpay enables S2S,** the same wallet token is the charge instrument.
+Human approves the quote (or a standing mandate), kernel stays green, vault
+charges, OTP stays in the vault. "Buy me this" with no second checkout tab. The
+quote contract stays.
 
-## The 8-click demo
+## Protocols (honest)
 
-```bash
-pnpm install && pnpm dev
-```
+Implemented:
 
-1. **`localhost:3000`** — dark stage, two doors. Click **As a customer**.
-2. **Agent** → type *"buy me niacinamide from Baron"*.
-3. The agent finds the real SKU and offers **one** upsell — the extra discount
-   shown is what policy would actually allow.
-4. **Accept** (or reject). That tap is the last decision: it quotes, approves and
-   issues a link in one go.
-5. Open the **`rzp.io`** link. Pay with `5267 3181 8797 5449`, any future expiry,
-   any CVV, Success on the OTP screen.
-6. **Orders → Check for payment.** Baron polls Razorpay; the order flips to
-   paid only when Razorpay reports a payment id.
-7. **Log out → As a merchant → Orders.** The same order, under **Paid**.
-8. **Audit.** `CHAIN OK`, and each row in one English sentence: *"You asked for
-   15% and policy allowed 5% via offer_… Payment Link issued. Capture not S2S."*
+- Agent catalog + OpenAPI / ChatGPT Actions
+- Quote contract (caller amount discarded)
+- ACP-shaped checkout session
+- MCP tools
+- AP2-shaped mandates + HTTP 402
+- Hash-chained audit
+- Razorpay Payment Links
 
-Try `"buy me the totally fake unicorn cream"` at step 2 — *"I could not find that
-product, so I am not adding anything."* No substitution, no order.
+## Innovation
 
----
+The new problem is not "can an agent pay." It is "can a merchant prove what the
+agent was allowed to do, and stop it when it wasn't." Baron's kernel is the only
+writer of the rupee amount and the coupon id. The agent sends intent. Razorpay
+charges the receipt. Spoken ₹1, invented SKUs, and off-ladder discounts never
+become a payment.
 
-## Environment
+## Run locally
+
+Node 20+, pnpm.
 
 ```bash
 cp .env.example .env
+pnpm install && pnpm dev
 ```
 
-| Variable | Purpose |
-| --- | --- |
-| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Test-mode API keys |
-| `RAZORPAY_WEBHOOK_SECRET` | Verifies the webhook's raw-body HMAC |
-| `RESUME_SECRET` | Signs the two-round shop token. Must match across instances. |
-| `SESSION_SECRET` | Signs the demo role cookie |
-| `APP_BASE_URL` | Origin used in machine-readable feeds |
+Env: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`,
+`APP_BASE_URL`. Optional: `BLOB_READ_WRITE_TOKEN`.
 
----
-
-## Layout
-
-```
-packages/kernel      pure decision core — no imports, no I/O, 16 tests
-packages/guard       15 typed AI-mistake codes, each mapped to ALLOW/CLAMP/REJECT
-packages/catalog     agent-readable catalog: search, lookup, cart maths
-packages/campaigns   campaign windows and spend ceilings
-packages/mandates    AP2-shaped intent → cart → payment hash chain
-packages/quotes      priced, bounded, expiring offers
-packages/orders      append-only order log; paid only when Razorpay says so
-packages/ledger      hash-chained audit trail
-packages/razorpay    the only Razorpay client
-packages/vault       holds a card. Has no charge method, by design.
-packages/resume      HMAC-signed two-round tokens
-packages/mcp         MCP stdio tools, HTTP-only, never imports the provider
-apps/web             customer store + merchant console
-```
-
-Further reading: [SHOPPER_AI.md](docs/SHOPPER_AI.md) ·
-[CUSTOM_GPT.md](docs/CUSTOM_GPT.md) · [SANDBOX_NOTES.md](docs/SANDBOX_NOTES.md) ·
-[POSTMORTEM.md](docs/POSTMORTEM.md)
-
-```bash
-pnpm verify
-```
+`pnpm verify` runs the typecheck and the full test suite.
