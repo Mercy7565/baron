@@ -1,6 +1,6 @@
 import { addCreatedCampaign, createdCampaigns, type CreatedCampaign, hydrateOverlay, persistOverlay } from "@/server/overlay";
 import { requireRole } from "@/server/require-role";
-import { durability } from "@/server/store";
+import { durability, lastStoreError } from "@/server/store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -32,10 +32,22 @@ export async function GET(): Promise<Response> {
 
   const auth = await requireRole("merchant");
   if (!auth.ok) return auth.response;
-  return Response.json({ campaigns: createdCampaigns() });
+
+  // The list is the overlay, not the seed file: a campaign the merchant
+  // created has to appear here or the console is lying to them.
+  return Response.json({
+    campaigns: createdCampaigns(),
+    storage: durability(),
+    error: lastStoreError(),
+  });
 }
 
 export async function POST(request: Request): Promise<Response> {
+  // Every handler hydrates, not just the first one in the file: a POST
+  // that appends to an unhydrated cache writes an overlay containing only
+  // its own row, which silently deletes every campaign already there.
+  await hydrateOverlay();
+
   const auth = await requireRole("merchant");
   if (!auth.ok) return auth.response;
 
@@ -86,5 +98,32 @@ export async function POST(request: Request): Promise<Response> {
   });
 
   const saved = await persistOverlay();
-  return Response.json({ campaign: created, saved, storage: durability() });
+  const storage = durability();
+  const error = lastStoreError();
+
+  /**
+   * Say it out loud, in the log and in the body.
+   *
+   * A create that answers 200 with `saved: false` looks like success to a UI
+   * and to a person. When storage is configured and the write still failed,
+   * that is a server fault and has to be a 5xx carrying the reason — anything
+   * else asks the merchant to notice a boolean.
+   */
+  console.log(
+    `[campaigns] create ${created.id} token=${Boolean(process.env.BLOB_READ_WRITE_TOKEN)} storage=${storage} saved=${saved}${error === null ? "" : ` error=${error}`}`,
+  );
+
+  if (!saved && storage === "blob") {
+    return Response.json(
+      {
+        campaign: created,
+        saved: false,
+        storage,
+        error: error ?? "the blob write failed without reporting a reason",
+      },
+      { status: 500 },
+    );
+  }
+
+  return Response.json({ campaign: created, saved, storage, error });
 }

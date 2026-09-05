@@ -103,6 +103,11 @@ export async function GET(): Promise<Response> {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  // Every handler hydrates, not just the first one in the file: a POST
+  // that appends to an unhydrated cache writes an overlay containing only
+  // its own row, which silently deletes every campaign already there.
+  await hydrateOverlay();
+
   let body: {
     action?: string;
     sku_id?: string;
@@ -158,6 +163,11 @@ export async function POST(request: Request): Promise<Response> {
 
 /** DELETE — empty the bag. The one way a basket legitimately goes to zero. */
 export async function DELETE(): Promise<Response> {
+  // Every handler hydrates, not just the first one in the file: a POST
+  // that appends to an unhydrated cache writes an overlay containing only
+  // its own row, which silently deletes every campaign already there.
+  await hydrateOverlay();
+
   const shopCode = await enteredCode();
   if (shopCode !== null) await writeBasket(shopCode, []);
   return Response.json(view([], shopCode));

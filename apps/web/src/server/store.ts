@@ -30,8 +30,6 @@ import { dirname, resolve } from "node:path";
 
 export type Durability = "blob" | "file" | "ephemeral";
 
-const BLOB_API = "https://blob.vercel-storage.com";
-
 function token(): string | null {
   const t = process.env.BLOB_READ_WRITE_TOKEN ?? "";
   return t === "" ? null : t;
@@ -66,31 +64,37 @@ function filePath(key: string): string {
 }
 
 // ------------------------------------------------------------------- the blob
+//
+// Through the official client, not a hand-rolled fetch. The Blob REST contract
+// carries a required `x-api-version` header among other things, and a request
+// missing it fails in a way that looks exactly like "nothing was stored" — the
+// first version of this file guessed at that contract and silently wrote
+// nothing on a deployment that had a perfectly good token.
+
+/** The last write failure, so a route can report it instead of shrugging. */
+let lastError: string | null = null;
+
+export function lastStoreError(): string | null {
+  return lastError;
+}
 
 async function blobRead<T>(key: string): Promise<T | null> {
   const t = token();
   if (t === null) return null;
 
   try {
-    // The store's own listing tells us the current URL. Blob URLs carry a
-    // random suffix unless suppressed, and reading a stale one is worse than
-    // reading none, so the listing is the source of the address.
-    const res = await fetch(`${BLOB_API}?prefix=${encodeURIComponent(key)}&limit=1`, {
-      headers: { authorization: `Bearer ${t}` },
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
+    const { head } = await import("@vercel/blob");
+    const meta = await head(`${key}.json`, { token: t });
 
-    const body = (await res.json()) as { blobs?: Array<{ url?: string; pathname?: string }> };
-    const hit = (body.blobs ?? []).find((b) => b.pathname === `${key}.json`);
-    if (hit?.url === undefined) return null;
-
-    const doc = await fetch(hit.url, { cache: "no-store" });
+    // `head` throws BlobNotFoundError when there is nothing there, which is a
+    // normal empty store rather than a failure.
+    const doc = await fetch(meta.url, { cache: "no-store" });
     if (!doc.ok) return null;
     return (await doc.json()) as T;
-  } catch {
-    // A storage outage must not take the shop down. The caller falls back to
-    // its own default and the page still renders.
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // A first read on an empty store is expected, not an error worth showing.
+    if (!/not\s*found/i.test(message)) lastError = `read: ${message}`;
     return null;
   }
 }
@@ -100,21 +104,21 @@ async function blobWrite(key: string, value: unknown): Promise<boolean> {
   if (t === null) return false;
 
   try {
-    const res = await fetch(`${BLOB_API}/${key}.json`, {
-      method: "PUT",
-      headers: {
-        authorization: `Bearer ${t}`,
-        "content-type": "application/json",
-        // A fixed pathname, overwritten in place: this is a record with one
-        // current value, not an append-only upload.
-        "x-add-random-suffix": "0",
-        "x-allow-overwrite": "1",
-        "x-cache-control-max-age": "0",
-      },
-      body: JSON.stringify(value),
+    const { put } = await import("@vercel/blob");
+    await put(`${key}.json`, JSON.stringify(value), {
+      access: "public",
+      token: t,
+      contentType: "application/json",
+      // One record with one current value, not an append-only upload: a fixed
+      // pathname, overwritten in place.
+      addRandomSuffix: false,
+      allowOverwrite: true,
+      cacheControlMaxAge: 0,
     });
-    return res.ok;
-  } catch {
+    lastError = null;
+    return true;
+  } catch (err) {
+    lastError = `write: ${err instanceof Error ? err.message : String(err)}`;
     return false;
   }
 }
