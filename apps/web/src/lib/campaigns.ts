@@ -28,26 +28,22 @@ export const CAMPAIGNS: Campaign[] = new Proxy([] as Campaign[], {
 });
 
 /**
- * Runtime on/off overrides for the /campaigns toggles. In-process only, like
- * the demo cart — the JSON file stays the declared default.
+ * Whether a seeded campaign is switched on.
+ *
+ * These used to be a Map on `globalThis` — pausing a campaign held only for
+ * the instance that served the click, so the merchant saw it resume by itself
+ * on the next request and a shopper could still be offered a campaign that had
+ * been turned off. The answer now comes from the merchant overlay, which is
+ * durable, and the shipped JSON stays the declared default.
  */
-const globalForCampaigns = globalThis as typeof globalThis & {
-  __countersign_campaign_overrides?: Map<string, boolean>;
-};
-
-const OVERRIDES: Map<string, boolean> =
-  globalForCampaigns.__countersign_campaign_overrides ?? new Map<string, boolean>();
-
-globalForCampaigns.__countersign_campaign_overrides = OVERRIDES;
-
 export function isCampaignActive(id: string): boolean {
-  const override = OVERRIDES.get(id);
+  const override = readOverlay().campaigns[id]?.active;
   if (override !== undefined) return override;
   return CAMPAIGNS.find((c) => c.id === id)?.active ?? false;
 }
 
 export function setCampaignActive(id: string, active: boolean): boolean {
-  OVERRIDES.set(id, active);
+  setCampaignOverlay(id, { active });
   return active;
 }
 

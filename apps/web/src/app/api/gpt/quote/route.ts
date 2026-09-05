@@ -1,6 +1,7 @@
 import { POST as createQuote } from "@/app/api/quotes/route";
 import { json, noSuchShop, preflight, scopeFor, shopperFrom } from "@/server/gpt-shopper";
 import { mintAndRegisterDemoIntent } from "@/server/mandates";
+import { hydrateOverlay } from "@/server/overlay";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -38,6 +39,10 @@ interface QuoteBody {
  * copies of the money path is one more than can ever be trusted.
  */
 export async function POST(request: Request): Promise<Response> {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   let body: QuoteBody = {};
   try {
     body = (await request.json()) as QuoteBody;

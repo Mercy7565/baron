@@ -6,10 +6,15 @@ import { enteredCode, unlockedTenant } from "@/server/shop-code";
 
 import { ExitShop } from "./ExitShop";
 import { ShopCodeGate } from "./ShopCodeGate";
+import { hydrateOverlay } from "@/server/overlay";
 
 export const dynamic = "force-dynamic";
 
 export default async function ShopPage() {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   const sellable = CATALOG.products.filter((p) => !p.blocked && p.availability === "in_stock");
   const rest = CATALOG.products.filter((p) => p.blocked || p.availability !== "in_stock");
 

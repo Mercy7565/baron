@@ -1,5 +1,6 @@
-import { addCreatedProduct, createdProducts } from "@/server/overlay";
+import { addCreatedProduct, createdProducts, hydrateOverlay, persistOverlay } from "@/server/overlay";
 import { requireRole } from "@/server/require-role";
+import { durability } from "@/server/store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -21,6 +22,10 @@ function slug(title: string): string {
 }
 
 export async function GET(): Promise<Response> {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   const auth = await requireRole("merchant");
   if (!auth.ok) return auth.response;
   return Response.json({ products: createdProducts() });
@@ -63,5 +68,6 @@ export async function POST(request: Request): Promise<Response> {
     image: String(body.image ?? "").trim() || "/products/placeholder.svg",
   });
 
-  return Response.json({ product: created });
+  const saved = await persistOverlay();
+  return Response.json({ product: created, saved, storage: durability() });
 }

@@ -20,6 +20,7 @@ import { bestClearableBps } from "@/server/coupons";
 import { cartFingerprint } from "@/server/fingerprint";
 import { lookupMandate, mandateRequiredResponse } from "@/server/mandates";
 import { buyerId } from "@/server/require-role";
+import { hydrateOverlay } from "@/server/overlay";
 
 /** The rung the kernel actually chose, so its rupee cap can be enforced. */
 function chosenRung(offerIds: string[]) {
@@ -84,6 +85,10 @@ interface QuoteRequest {
  * order, and does not touch the vault.
  */
 export async function POST(request: Request): Promise<Response> {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   let body: unknown;
   try {
     body = await request.json();

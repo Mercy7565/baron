@@ -9,6 +9,7 @@ import { campaignRows } from "@/server/campaign-rows";
 
 import { CreateCampaign, type SkuOption } from "./CreateCampaign";
 import { RowControls } from "./RowControls";
+import { hydrateOverlay } from "@/server/overlay";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -45,7 +46,11 @@ function suggests(c: Campaign): string {
   return `baskets over ${rupees(t.min_cart_paise)}`;
 }
 
-export default function MerchantCampaigns() {
+export default async function MerchantCampaigns() {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   const now = new Date();
   const quotes = allQuotes();
 

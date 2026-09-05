@@ -9,6 +9,35 @@ Razorpay AI Buildathon — Track 01. Everything below is on Razorpay **Test mode
 
 ---
 
+## Quick start
+
+```bash
+pnpm install
+cp .env.example .env      # fill in your Razorpay test keys
+pnpm dev                  # http://localhost:3000
+```
+
+| | |
+| --- | --- |
+| **Live demo** | https://baron-shop.vercel.app |
+| **Shop code** | `BARON-SKIN` — a shopper enters this to see the catalog |
+| **Sign in** | `merchant` / `merchant` for the console, `aryan` / `aryan` to shop |
+| **Test card** | `5267 3181 8797 5449`, any future expiry, any CVV |
+| **Custom GPT schema** | https://baron-shop.vercel.app/.well-known/openai-openapi.yaml |
+| **Webhook** | `POST /api/webhooks/razorpay`, signed with `RAZORPAY_WEBHOOK_SECRET` |
+
+`pnpm verify` runs the typecheck and the full test suite.
+
+**Storage.** Campaigns, catalog edits and the margin floor are shared state, so
+they need somewhere durable. A laptop uses `.data/`. A deployment needs a Vercel
+Blob store connected to the project, which injects `BLOB_READ_WRITE_TOKEN`;
+without one the merchant console says on screen that its edits are not being
+saved rather than losing them quietly. Everything else either lives in the
+shopper's own signed cookie (basket, wallet reference, shop code) or is
+reconstructed from the Razorpay account (orders, payments, decisions).
+
+---
+
 ## Track 01, both halves
 
 **Grow revenue.** A campaign console with real spend ceilings, an orchestrator

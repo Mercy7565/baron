@@ -4,11 +4,16 @@ import { ConsoleChrome } from "@/components/ConsoleChrome";
 import { couponPercentOf, paidDecisionRows, rowAsText, whyRow } from "@/server/ledger-rows";
 
 import { LedgerTable } from "./LedgerTable";
+import { hydrateOverlay } from "@/server/overlay";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function MerchantAudit() {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   const chain = verifyAuditChain(readAuditRecords());
 
   /**

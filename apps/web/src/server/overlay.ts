@@ -1,5 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { readRecord, writeRecord } from "@/server/store";
 
 import type { Campaign } from "@countersign/campaigns";
 import type { Catalog, Product } from "@countersign/catalog";
@@ -102,35 +101,87 @@ export interface Overlay {
 
 const EMPTY: Overlay = { version: 1, products: {}, campaigns: {}, policy: {}, burned: [] };
 
-export function overlayPath(): string {
-  return resolve(process.env.MERCHANT_OVERLAY_PATH ?? ".data/merchant_overlay.json");
+/** The key this overlay lives under in the durable store. */
+const KEY = "merchant_overlay";
+
+/**
+ * The overlay, cached for this process.
+ *
+ * Every accessor below is synchronous, and they are called from deep inside
+ * pricing, the recommender and two Proxy getters — making them async would
+ * reach about forty files. So the shape is a cache: `hydrateOverlay()` pulls
+ * the durable copy in at the top of a request, and the sync readers work off
+ * what it left behind.
+ *
+ * A cold instance that reads before hydrating sees the shipped defaults, which
+ * is what it saw before any of this existed: stale, never wrong.
+ */
+const globalForOverlay = globalThis as typeof globalThis & {
+  __baron_overlay?: Overlay;
+  __baron_overlay_at?: number;
+};
+
+/** How long a hydrated copy is trusted before another instance's write matters. */
+const CACHE_MS = 5_000;
+
+function normalise(parsed: Partial<Overlay> | null): Overlay {
+  if (parsed === null) return { ...EMPTY };
+  return {
+    version: 1,
+    products: parsed.products ?? {},
+    campaigns: parsed.campaigns ?? {},
+    policy: parsed.policy ?? {},
+    burned: parsed.burned ?? [],
+    created_campaigns: parsed.created_campaigns ?? [],
+    created_products: parsed.created_products ?? [],
+  };
+}
+
+/**
+ * Pull the durable overlay into this process.
+ *
+ * Called at the top of every entry point that reads or writes merchant state.
+ * Cheap and idempotent: within `CACHE_MS` it does nothing, so a page that
+ * hydrates and then calls six things that read the overlay pays once.
+ */
+export async function hydrateOverlay(force = false): Promise<Overlay> {
+  const at = globalForOverlay.__baron_overlay_at ?? 0;
+  const fresh = Date.now() - at < CACHE_MS;
+
+  if (!force && fresh && globalForOverlay.__baron_overlay !== undefined) {
+    return globalForOverlay.__baron_overlay;
+  }
+
+  const loaded = await readRecord<Partial<Overlay> | null>(KEY, null);
+  const overlay = normalise(loaded);
+
+  globalForOverlay.__baron_overlay = overlay;
+  globalForOverlay.__baron_overlay_at = Date.now();
+  return overlay;
 }
 
 export function readOverlay(): Overlay {
-  const path = overlayPath();
-  if (!existsSync(path)) return { ...EMPTY };
-
-  try {
-    const parsed = JSON.parse(readFileSync(path, "utf8")) as Partial<Overlay>;
-    return {
-      version: 1,
-      products: parsed.products ?? {},
-      campaigns: parsed.campaigns ?? {},
-      policy: parsed.policy ?? {},
-      burned: parsed.burned ?? [],
-      created_campaigns: parsed.created_campaigns ?? [],
-      created_products: parsed.created_products ?? [],
-    };
-  } catch {
-    // A corrupt overlay means "no edits", never a broken store.
-    return { ...EMPTY };
-  }
+  return globalForOverlay.__baron_overlay ?? { ...EMPTY };
 }
 
+/**
+ * Update the cache now, persist in the background.
+ *
+ * The rest of this request sees the change immediately. A merchant route that
+ * needs to tell the truth about whether it saved should await
+ * `persistOverlay()` instead.
+ */
 function writeOverlay(overlay: Overlay): void {
-  const path = overlayPath();
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(overlay, null, 2)}\n`, "utf8");
+  globalForOverlay.__baron_overlay = overlay;
+  globalForOverlay.__baron_overlay_at = Date.now();
+  void writeRecord(KEY, overlay);
+}
+
+/** Await the durable write, and report whether it actually landed. */
+export async function persistOverlay(): Promise<boolean> {
+  const overlay = readOverlay();
+  globalForOverlay.__baron_overlay_at = Date.now();
+  return await writeRecord(KEY, overlay);
 }
 
 export function setProductOverlay(id: string, patch: ProductOverlay): Overlay {

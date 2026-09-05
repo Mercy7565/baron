@@ -1,11 +1,16 @@
-import { setProductOverlay } from "@/server/overlay";
+import { setProductOverlay, hydrateOverlay, persistOverlay } from "@/server/overlay";
 import { requireRole } from "@/server/require-role";
+import { durability } from "@/server/store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /** POST /api/merchant/catalog — write one SKU edit into the overlay. */
 export async function POST(request: Request): Promise<Response> {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   // Middleware guards pages, not APIs. Without this a logged-out curl could
   // edit the catalog.
   const auth = await requireRole("merchant");
@@ -45,5 +50,6 @@ export async function POST(request: Request): Promise<Response> {
     active: body.active !== false,
   });
 
-  return Response.json({ ok: true, sku_id: id });
+  const saved = await persistOverlay();
+  return Response.json({ ok: true, sku_id: id, saved, storage: durability() });
 }

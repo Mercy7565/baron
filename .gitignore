@@ -29,5 +29,7 @@ Thumbs.db
 
 .vercel
 
-# local audit log (placeholder until the DB slice)
+# Local durable store: the audit chain, orders, quotes, the merchant overlay.
+# Real data, never source. On a deployment these live in Vercel Blob instead.
 .data/
+*.jsonl

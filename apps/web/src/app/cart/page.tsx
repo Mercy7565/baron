@@ -1,6 +1,7 @@
 import { StoreChrome } from "@/components/StoreChrome";
 
 import { CartClient } from "./CartClient";
+import { hydrateOverlay } from "@/server/overlay";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -13,7 +14,11 @@ export const runtime = "nodejs";
  * had no way back to the shop, the agent or their orders except the browser
  * button — a dead end in the middle of the buying flow.
  */
-export default function CartPage() {
+export default async function CartPage() {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   return (
     <StoreChrome>
       <h1>Your basket</h1>

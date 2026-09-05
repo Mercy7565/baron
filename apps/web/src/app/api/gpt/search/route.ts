@@ -2,6 +2,7 @@ import type { Product } from "@countersign/catalog";
 
 import { json, noSuchShop, preflight, scopeFor } from "@/server/gpt-shopper";
 import { resolveSku, search_catalog } from "@/server/tools";
+import { hydrateOverlay } from "@/server/overlay";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -32,6 +33,10 @@ function publicProduct(p: Product) {
  * closest row.
  */
 export async function GET(request: Request): Promise<Response> {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   const url = new URL(request.url);
   const scope = scopeFor(url.searchParams.get("shop_code"));
   if (scope === null) return noSuchShop();

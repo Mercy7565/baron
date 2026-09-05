@@ -1,5 +1,6 @@
-import { addCreatedCampaign, createdCampaigns, type CreatedCampaign } from "@/server/overlay";
+import { addCreatedCampaign, createdCampaigns, type CreatedCampaign, hydrateOverlay, persistOverlay } from "@/server/overlay";
 import { requireRole } from "@/server/require-role";
+import { durability } from "@/server/store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,6 +26,10 @@ function slug(name: string): string {
 }
 
 export async function GET(): Promise<Response> {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   const auth = await requireRole("merchant");
   if (!auth.ok) return auth.response;
   return Response.json({ campaigns: createdCampaigns() });
@@ -80,5 +85,6 @@ export async function POST(request: Request): Promise<Response> {
     active: true,
   });
 
-  return Response.json({ campaign: created });
+  const saved = await persistOverlay();
+  return Response.json({ campaign: created, saved, storage: durability() });
 }

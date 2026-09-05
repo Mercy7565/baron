@@ -6,12 +6,15 @@ import { ConsoleChrome } from "@/components/ConsoleChrome";
 import { CATALOG } from "@/lib/catalog";
 import { DEFAULT_MARGIN_FLOOR_BPS, DEV_POLICY } from "@/lib/policy";
 import { campaignRows } from "@/server/campaign-rows";
-import { causeOf, couponPercentOf, ledgerRows, paidDecisionRows } from "@/server/ledger-rows";
+import { causeOf, couponPercentOf, paidDecisionRows } from "@/server/ledger-rows";
+import { moneyLedger } from "@/server/money-rows";
+import { durabilityWarning } from "@/server/store";
 
 import { MarginFloor, type FloorSample } from "./MarginFloor";
 import { OverviewTable, type OverviewRow } from "./OverviewTable";
 import { shopCodeFor } from "@/server/shop-code";
 import { DEFAULT_TENANT } from "@/server/users";
+import { hydrateOverlay } from "@/server/overlay";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -31,15 +34,27 @@ const rupees = (paise: number): string => `₹${(paise / 100).toLocaleString("en
  * attach, and one table says what happened and why in a sentence.
  */
 export default async function MerchantOverview() {
-  const now = new Date();
-  const all = ledgerRows();
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
 
-  // Retired coupon sets are still in the log — they are real history — but they
-  // describe coupons that cannot attach, so they are counted separately and
-  // never mixed into a KPI.
-  const live = all.filter((r) => r.live);
+  const now = new Date();
+
+  /**
+   * What Razorpay says happened, not what /tmp remembers.
+   *
+   * These tiles read `ledgerRows()` — the quote log — which lives in /tmp on a
+   * serverless host and is empty on almost every request. So a console whose
+   * whole claim is that it tells the truth about money reported "0 quotes
+   * priced" and "0 reached a payment link" while the Razorpay dashboard held
+   * seven captured payments. The ledger below is the same merged source
+   * /merchant/audit and /merchant/orders read.
+   */
+  const ledger = await moneyLedger();
+  const decisions = await paidDecisionRows();
 
   const chain = verifyAuditChain(readAuditRecords());
+  const storageWarning = durabilityWarning();
 
   /**
    * Every tile reads the same store the page it summarises reads.
@@ -71,7 +86,9 @@ export default async function MerchantOverview() {
     .filter((c) => c.kind === "gift")
     .reduce((n, c) => n + c.left_paise, 0);
 
-  const withLink = live.filter((r) => r.outcome !== "no link");
+  const withLink = ledger.rows.filter((r) => r.payment_link_id !== null).length;
+  const captured = ledger.counts.paid;
+  const awaiting = ledger.counts.awaiting;
 
   /**
    * Real baskets for the floor preview.
@@ -108,7 +125,7 @@ export default async function MerchantOverview() {
   // table should hold money that arrived, not every question a shopper asked.
   // The last five money movements by time, from Razorpay with the local log
   // folded in — not five rows of whatever /tmp happens to still hold.
-  const rows: OverviewRow[] = (await paidDecisionRows()).slice(0, 5).map((r) => ({
+  const rows: OverviewRow[] = decisions.slice(0, 5).map((r) => ({
     key: r.key,
     ts: r.ts,
     subtotal_paise: r.subtotal_paise,
@@ -155,20 +172,33 @@ export default async function MerchantOverview() {
           <div className="k">budget left on live gift campaigns</div>
         </div>
         <div className="mc-stat">
-          <div className="v">{live.length}</div>
-          <div className="k">quotes priced</div>
+          <div className="v" style={{ color: "var(--ok)" }}>{captured}</div>
+          <div className="k">payments captured</div>
         </div>
         <div className="mc-stat">
-          <div className="v">{withLink.length}</div>
-          <div className="k">reached a payment link</div>
+          <div className="v">{awaiting}</div>
+          <div className="k">links awaiting payment · {withLink} issued</div>
         </div>
         <div className="mc-stat">
+          {/* "OK · 0 rows" is a claim that nothing ever happened. When the
+              local chain is empty but Razorpay has decisions, the honest
+              answer is the number of decisions we can actually account for. */}
           <div className="v" style={{ color: chain.ok ? "var(--ok)" : "var(--danger)" }}>
             {chain.ok ? "OK" : "GAP"}
           </div>
-          <div className="k">audit chain{chain.ok ? ` · ${chain.length} rows` : ""}</div>
+          <div className="k">
+            {chain.ok
+              ? `decision record · ${decisions.length} row${decisions.length === 1 ? "" : "s"}`
+              : "decision chain broken"}
+          </div>
         </div>
       </div>
+
+      {storageWarning !== null && (
+        <div className="mc-banner" style={{ marginBottom: 12 }}>
+          {storageWarning}
+        </div>
+      )}
 
       {shopCode === null ? (
         <div className="mc-banner" style={{ marginBottom: 12 }}>

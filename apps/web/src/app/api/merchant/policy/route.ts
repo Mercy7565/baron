@@ -1,6 +1,7 @@
 import { DEFAULT_MARGIN_FLOOR_BPS } from "@/lib/policy";
-import { marginFloorBps, setMarginFloorBps } from "@/server/overlay";
+import { marginFloorBps, setMarginFloorBps, hydrateOverlay, persistOverlay } from "@/server/overlay";
 import { requireRole } from "@/server/require-role";
+import { durability } from "@/server/store";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -15,10 +16,17 @@ export const runtime = "nodejs";
  * to drift out of sync.
  */
 export async function GET(): Promise<Response> {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   const auth = await requireRole("merchant");
   if (!auth.ok) return auth.response;
 
+  const saved = await persistOverlay();
   return Response.json({
+    saved,
+    storage: durability(),
     margin_floor_bps: marginFloorBps(DEFAULT_MARGIN_FLOOR_BPS),
     default_margin_floor_bps: DEFAULT_MARGIN_FLOOR_BPS,
   });

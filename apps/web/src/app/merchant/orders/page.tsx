@@ -1,5 +1,6 @@
 import { ConsoleChrome } from "@/components/ConsoleChrome";
 import { moneyLedger, type MoneyRow } from "@/server/money-rows";
+import { hydrateOverlay } from "@/server/overlay";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -25,6 +26,10 @@ export default async function MerchantOrders({
 }: {
   searchParams: Promise<{ tab?: string }>;
 }) {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   const { tab } = await searchParams;
   const showing: "paid" | "awaiting_payment" | "closed" =
     tab === "awaiting" ? "awaiting_payment" : tab === "closed" ? "closed" : "paid";

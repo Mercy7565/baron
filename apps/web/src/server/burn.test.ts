@@ -5,11 +5,15 @@ import { join } from "node:path";
 
 let dir: string;
 
-beforeEach(() => {
+beforeEach(async () => {
+  // The overlay lives in the durable store now, under a fixed key inside a
+  // directory. Point that directory at a temp dir and seed the record, then
+  // hydrate — the sync readers work off the in-process cache, so a file written
+  // behind their back is not visible until it is loaded.
   dir = mkdtempSync(join(tmpdir(), "cs-burn-"));
-  process.env.MERCHANT_OVERLAY_PATH = join(dir, "overlay.json");
+  process.env.BARON_STORE_DIR = dir;
   writeFileSync(
-    process.env.MERCHANT_OVERLAY_PATH,
+    join(dir, "merchant_overlay.json"),
     JSON.stringify({
       version: 1,
       products: {},
@@ -31,11 +35,17 @@ beforeEach(() => {
     }),
     "utf8",
   );
+
+  const { hydrateOverlay } = await import("./overlay");
+  await hydrateOverlay(true);
 });
 
-afterEach(() => {
-  delete process.env.MERCHANT_OVERLAY_PATH;
+afterEach(async () => {
+  delete process.env.BARON_STORE_DIR;
   rmSync(dir, { recursive: true, force: true });
+  // Leave no cached overlay behind for the next test file.
+  const { hydrateOverlay } = await import("./overlay");
+  await hydrateOverlay(true);
 });
 
 /**

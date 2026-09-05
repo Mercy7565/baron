@@ -9,6 +9,7 @@ import { enteredCode } from "@/server/shop-code";
 import { cartFingerprint } from "@/server/fingerprint";
 import { lookupMandate, mintAndRegisterDemoIntent } from "@/server/mandates";
 import { buyerId } from "@/server/require-role";
+import { hydrateOverlay } from "@/server/overlay";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -27,6 +28,10 @@ export const runtime = "nodejs";
  * never describe a bag other than the one it was made for.
  */
 export async function POST(request: Request): Promise<Response> {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   const buyer = await buyerId();
 
   let body: { cart_id?: string; mandate_hash?: string | null } = {};

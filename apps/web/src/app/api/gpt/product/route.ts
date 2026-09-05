@@ -2,6 +2,7 @@ import { productById } from "@countersign/catalog";
 
 import { CATALOG } from "@/lib/catalog";
 import { json, noSuchShop, preflight, scopeFor } from "@/server/gpt-shopper";
+import { hydrateOverlay } from "@/server/overlay";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -18,6 +19,10 @@ export const OPTIONS = preflight;
  * shopper-facing model gets shopper-facing facts.
  */
 export async function GET(request: Request): Promise<Response> {
+  // Merchant state is durable and shared; pull it into this instance
+  // before anything reads a campaign, a catalog edit or the margin floor.
+  await hydrateOverlay();
+
   const url = new URL(request.url);
   const scope = scopeFor(url.searchParams.get("shop_code"));
   if (scope === null) return noSuchShop();
