@@ -191,6 +191,13 @@ export interface PaymentLink {
   amount: number;
   /** Present once the link has been paid. */
   payments?: Array<{ payment_id?: string; status?: string }> | null;
+  /**
+   * Whatever we stamped on the link at creation.
+   *
+   * Razorpay copies these onto the payment and onto the order the link creates,
+   * which makes them the one record of a decision that outlives our own files.
+   */
+  notes?: unknown;
 }
 
 /**

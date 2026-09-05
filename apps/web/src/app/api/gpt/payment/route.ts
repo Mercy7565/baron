@@ -9,6 +9,13 @@ export const runtime = "nodejs";
 
 export const OPTIONS = preflight;
 
+/** One string out of a Razorpay notes bag, or null. */
+function noteString(notes: unknown, key: string): string | null {
+  if (typeof notes !== "object" || notes === null) return null;
+  const value = (notes as Record<string, unknown>)[key];
+  return typeof value === "string" && value !== "" ? value : null;
+}
+
 /**
  * GET /api/gpt/payment?quote_id=…&payment_link_id=…
  *
@@ -58,12 +65,27 @@ export async function GET(request: Request): Promise<Response> {
   let payId: string | null = null;
   let live = false;
   let error: string | null = null;
+  let quoteFromNotes: string | null = null;
 
   if (haveCreds && linkId !== null) {
     const res = await fetchPaymentLink(creds, linkId);
     if (res.ok) {
       live = true;
       shortUrl = res.data.short_url ?? shortUrl;
+
+      /**
+       * The decision, straight off the link.
+       *
+       * The link's notes carry the quote and the amount owed, so an unpaid link
+       * can answer both without any local file. Reading only on the paid branch
+       * meant "not paid yet" came back with a null total, which tells a shopper
+       * nothing about what they still owe.
+       */
+      const notes = res.data.notes;
+      const noteQuote = noteString(notes, "quote_id");
+      const noteTotal = Number(noteString(notes, "legal_total_paise") ?? "");
+      if (noteQuote !== null) quoteFromNotes = noteQuote;
+      if (Number.isFinite(noteTotal) && noteTotal > 0) expectedPaise = expectedPaise ?? noteTotal;
       const captured = (res.data.payments ?? []).find(
         (p) => p.status === "captured" && typeof p.payment_id === "string",
       );
@@ -121,7 +143,7 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   const payload = {
-    quote_id: quoteId === "" ? null : quoteId,
+    quote_id: quoteId === "" ? quoteFromNotes : quoteId,
     payment_link_id: linkId,
     paid,
     legal_total_paise: expectedPaise,

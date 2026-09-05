@@ -189,6 +189,7 @@ export async function issueLinkForQuote(input: {
         verdict: quote.verdict,
         asked_bps: String(quote.asked_bps),
         applied_bps: String(quote.applied_bps),
+        legal_total_paise: String(quote.legal_total_paise),
         offer_id: quote.offer_id ?? "none",
         shop_code: shopCodeFor(DEFAULT_TENANT) ?? "none",
         actor: quote.agent_id !== "" && quote.agent_id !== "unknown" ? "agent" : "customer",
