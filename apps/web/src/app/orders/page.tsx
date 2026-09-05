@@ -45,7 +45,7 @@ function explainRow(r: MoneyRow): string {
   }
 
   if (r.source === "razorpay") {
-    parts.push("The basket this paid for is no longer in the local log.");
+    parts.push("The items on this order were not recorded against the payment.");
   }
 
   return parts.join(" ");

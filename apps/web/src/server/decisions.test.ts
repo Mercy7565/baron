@@ -60,7 +60,7 @@ describe("a payment Razorpay reports but the log cannot explain", () => {
     campaign: null,
     upsell_accepted: null,
     asked_bps: 0,
-    applied_bps: 0,
+    applied_bps: 1100,
     offer_id: "offer_TXuanzMIxTBH9p",
     attached: true,
     subtotal_paise: 169_800,
@@ -85,32 +85,35 @@ describe("a payment Razorpay reports but the log cannot explain", () => {
     source: "razorpay" as const,
   };
 
-  it("is described as captured, never as a policy decision", async () => {
+  it("names the rung the offer is worth, never a missing file", async () => {
     const { causeOf } = await import("./ledger-rows");
     const cause = causeOf(unexplained);
 
-    expect(cause).toContain("Captured by Razorpay");
+    expect(cause).toContain("Allowed 11%");
+    expect(cause).not.toContain("local log");
     // The reasoning branches all talk about gates. None of them may fire on a
     // row whose ask and margin are unknown.
     expect(cause).not.toContain("margin floor");
     expect(cause).not.toContain("minimum");
   });
 
-  it("never claims an ask it does not have", async () => {
+  it("never claims an ask it does not have, and never blames a file", async () => {
     const { whyRow } = await import("./ledger-rows");
     const why = whyRow(unexplained);
 
     expect(why).not.toContain("We asked for 0%");
-    expect(why).toContain("no longer in the local log");
+    // A merchant does not care where we keep our files. The row says what the
+    // coupon was and what was captured, both of which are facts about money.
+    expect(why).not.toContain("local log");
     expect(why).toContain("pay_x");
+    expect(why).toContain("offer_TXuanzMIxTBH9p");
   });
 
-  it("exports a copyable row that admits what is missing", async () => {
+  it("exports a copyable row carrying the coupon and the shop", async () => {
     const { rowAsText } = await import("./ledger-rows");
     const text = rowAsText(unexplained);
 
-    expect(text).toContain("captured by Razorpay");
-    expect(text).toContain("asked (unknown) -> allowed (unknown)");
+    expect(text).toContain("allowed 11%");
     expect(text).toContain("BARON-SKIN");
     expect(text).toContain("offer_TXuanzMIxTBH9p");
   });

@@ -105,13 +105,12 @@ export function LedgerTable({
                     })}
                   </td>
                   <td>
+                    {/* Razorpay is a processor, never the person who bought. */}
                     <span
                       className="mc-pill"
-                      data-tone={
-                        !r.verdict_known ? "blocked" : r.actor_kind === "agent" ? "paused" : undefined
-                      }
+                      data-tone={r.actor_kind === "agent" ? "paused" : undefined}
                     >
-                      {r.verdict_known ? r.actor_kind : "razorpay"}
+                      {r.actor_kind}
                     </span>
                     <div className="mc-tiny">{r.shop_code ?? r.actor}</div>
                   </td>

@@ -5,6 +5,8 @@ import { appendOrder } from "@countersign/orders";
 import { createPaymentLink } from "@countersign/razorpay";
 
 import { planPaymentLink } from "@/server/link-amount";
+import { shopCodeFor } from "@/server/shop-code";
+import { DEFAULT_TENANT } from "@/server/users";
 import { Wallet } from "@countersign/vault";
 
 import { lookupMandate } from "@/server/mandates";
@@ -166,10 +168,33 @@ export async function issueLinkForQuote(input: {
       amount_paise: plan.amount_paise,
       description: `Order ${quote.quote_id}`,
       reference_id: `${quote.quote_id}-${Date.now().toString(36)}`,
+      /**
+       * The decision, written where it cannot be lost.
+       *
+       * Razorpay copies a link's notes onto the payment and onto the order the
+       * link creates, so this is the one record of the decision that survives
+       * everything on our side. The quote and audit logs live in /tmp on a
+       * serverless host and a cold start takes them; the merchant was then
+       * shown "not recorded" against a payment that had a perfectly good
+       * decision behind it.
+       *
+       * Short strings only — Razorpay caps notes at fifteen keys — and every
+       * one is a fact from this quote, never a derived sentence, so the reader
+       * can phrase it however it likes.
+       */
       notes: {
         decision_id: quote.decision_id ?? "",
         quote_id: quote.quote_id,
         order_id: order.id,
+        verdict: quote.verdict,
+        asked_bps: String(quote.asked_bps),
+        applied_bps: String(quote.applied_bps),
+        offer_id: quote.offer_id ?? "none",
+        shop_code: shopCodeFor(DEFAULT_TENANT) ?? "none",
+        actor: quote.agent_id !== "" && quote.agent_id !== "unknown" ? "agent" : "customer",
+        buyer: quote.buyer_user_id,
+        campaign_id: quote.campaign_id ?? "none",
+        upsell: quote.upsell[0]?.sku_id ?? "none",
       },
       offer_ids: plan.offer_ids,
     },

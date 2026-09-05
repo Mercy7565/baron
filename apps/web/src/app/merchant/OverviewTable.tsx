@@ -85,19 +85,25 @@ export function OverviewTable({ rows }: { rows: OverviewRow[] }) {
                   </td>
                   <td className="num">{rupees(r.subtotal_paise)}</td>
                   <td>
-                    {r.campaign ?? r.who}
+                    {/* Never "unknown": somebody bought this. When the buyer's
+                        name did not survive, they are still a shopper. */}
+                    {r.campaign ?? (r.who === "unknown" ? "shopper" : r.who)}
                     <div className="mc-tiny">
-                      {r.shop_code ?? (r.campaign === null ? r.who_kind : `${r.who_kind} · ${r.who}`)}
+                      {[r.who_kind, r.shop_code].filter((x) => x !== null).join(" · ")}
                     </div>
                   </td>
-                  {/* A dash, not a zero. "0%" is a claim that nothing was
-                      asked for; this row simply does not know. */}
-                  <td className="num">{r.verdict_known ? `${r.asked_bps / 100}%` : "—"}</td>
+                  {/* "not asked" is a fact about the request; a dash was a fact
+                      about our bookkeeping, which is not the merchant's problem. */}
                   <td className="num">
-                    {r.verdict_known || r.applied_bps > 0 ? (
+                    {r.asked_bps > 0 ? `${r.asked_bps / 100}%` : <span className="mc-tiny">not asked</span>}
+                  </td>
+                  <td className="num">
+                    {r.applied_bps > 0 ? (
                       <strong>{r.applied_bps / 100}%</strong>
+                    ) : r.coupon !== null ? (
+                      <strong>{r.coupon}</strong>
                     ) : (
-                      "—"
+                      <span className="mc-tiny">no coupon</span>
                     )}
                   </td>
                   <td style={{ maxWidth: 330 }}>{r.cause}</td>

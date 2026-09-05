@@ -155,7 +155,7 @@ export default async function MerchantOrders({
                       </div>
                     ))}
                     {r.source === "razorpay" && (
-                      <div className="mc-tiny">basket not in local log</div>
+                      <div className="mc-tiny">items not recorded on this payment</div>
                     )}
                   </td>
                   <td className="num">{r.asked_bps === null ? "—" : `${r.asked_bps / 100}%`}</td>

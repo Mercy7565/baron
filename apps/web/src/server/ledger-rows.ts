@@ -239,10 +239,21 @@ export function causeOf(r: LedgerRow): string {
   // No decision on file. Every branch below reasons from asked_bps, the margin
   // and the ladder gates; running them on zeros would invent a reason for a
   // payment we cannot explain, which is worse than admitting we cannot.
+  /**
+   * A row read back from Razorpay's notes rather than from our own log.
+   *
+   * It still says what was asked and what was allowed, because the notes carry
+   * both. What it must not do is run the branches below, which reason about
+   * margin and cart-size gates from a margin this row does not have.
+   */
   if (!r.verdict_known) {
-    return r.offer_id === null
-      ? "Captured by Razorpay. The decision behind it is no longer in the local log."
-      : `Captured by Razorpay with ${r.offer_id}. The decision behind it is no longer in the local log.`;
+    const allowed =
+      r.applied_bps > 0
+        ? `Allowed ${r.applied_bps / 100}%${r.offer_id === null ? "" : ` (${r.offer_id})`}.`
+        : couponPercentOf(r.offer_id) !== null
+          ? `Allowed ${couponPercentOf(r.offer_id)} (${r.offer_id ?? ""}).`
+          : "No coupon applied.";
+    return r.asked_bps > 0 ? `Asked ${r.asked_bps / 100}%. ${allowed}` : allowed;
   }
 
   if (r.verdict === "REJECT") return "Policy refused the basket, so no order was created.";
@@ -298,11 +309,18 @@ export function whyRow(r: LedgerRow): string {
 
   if (!r.verdict_known) {
     parts.push(
-      `Razorpay reports this payment as captured${r.captured_paise === null ? "" : ` for ${rupees(r.captured_paise)}`}${r.payment_id === null ? "" : ` (${r.payment_id})`}.`,
+      r.asked_bps > 0
+        ? `Asked ${r.asked_bps / 100}%. Allowed ${r.applied_bps / 100}%.`
+        : r.applied_bps > 0
+          ? `Allowed ${r.applied_bps / 100}%.`
+          : "No coupon applied to this basket.",
     );
-    if (r.offer_id !== null) parts.push(`The order carried ${r.offer_id}.`);
+    if (r.offer_id !== null) {
+      parts.push(`Razorpay attached ${r.offer_id} to the order.`);
+    }
+    if (r.campaign !== null) parts.push(`${r.campaign} was the campaign in play.`);
     parts.push(
-      "What was asked for and what policy allowed are not on this row: the quote it came from is no longer in the local log. The payment itself is not in doubt — it is in the Razorpay dashboard.",
+      `Captured${r.captured_paise === null ? "" : ` ${rupees(r.captured_paise)}`}${r.payment_id === null ? "" : ` (${r.payment_id})`}.`,
     );
     return parts.join(" ");
   }
@@ -359,8 +377,8 @@ export function rowAsText(r: LedgerRow): string {
     return [
       `Time          ${new Date(r.ts).toISOString()}`,
       `Shop          ${r.shop_code ?? "(unknown)"}`,
-      `Verdict       captured by Razorpay (decision not in the local log)`,
-      `Coupon        asked (unknown) -> allowed (unknown)`,
+      `Verdict       ${r.verdict}`,
+      `Coupon        asked ${r.asked_bps > 0 ? `${r.asked_bps / 100}%` : "(not asked)"} -> allowed ${r.applied_bps / 100}%`,
       `Offer         ${r.offer_id ?? "none"}`,
       `Money         ${r.captured_paise === null ? "(unknown)" : rupees(r.captured_paise)} captured`,
       `Payment       ${r.payment_id ?? "(none)"}`,
@@ -481,17 +499,33 @@ export async function paidDecisionRows(): Promise<LedgerRow[]> {
  * Razorpay and are the ones a merchant can check in their dashboard.
  */
 function razorpayOnlyRow(m: MoneyRow): LedgerRow {
+  const askedBps = m.asked_bps;
+  const appliedBps = m.applied_bps;
+  const coupon = couponPercentOf(m.offer_id);
+
   return {
     key: m.key,
     ts: m.paid_at ?? m.created_at,
-    actor: "unknown",
-    actor_kind: "customer",
-    asked: m.summary === "" ? "not recorded" : m.summary,
-    found: m.summary === "" ? "not recorded" : m.summary,
-    campaign: null,
-    upsell_accepted: null,
-    asked_bps: 0,
-    applied_bps: m.applied_bps ?? 0,
+    // Razorpay is a processor, not a person. Whoever bought this was a shopper,
+    // whatever our own log does or does not still remember about them.
+    actor: m.buyer_user_id ?? "shopper",
+    actor_kind: m.actor_kind ?? "customer",
+    asked:
+      m.summary !== ""
+        ? m.summary
+        : askedBps !== null
+          ? `${askedBps / 100}% requested`
+          : "not asked",
+    found:
+      appliedBps !== null
+        ? `${appliedBps / 100}% allowed`
+        : coupon !== null
+          ? `${coupon} allowed`
+          : "no coupon",
+    campaign: campaignNameOf(m.campaign_id) ?? m.campaign_id,
+    upsell_accepted: m.upsell_sku === null ? null : true,
+    asked_bps: askedBps ?? 0,
+    applied_bps: appliedBps ?? 0,
     offer_id: m.offer_id,
     attached: m.offer_id === null ? null : true,
     // The order amount is the pre-coupon basket when we raised the link that
@@ -502,8 +536,8 @@ function razorpayOnlyRow(m: MoneyRow): LedgerRow {
     outcome: "paid",
     payment_id: m.payment_id,
     short_url: m.short_url,
-    verdict: "CAPTURED",
-    decision_id: null,
+    verdict: m.verdict ?? "CAPTURED",
+    decision_id: m.decision_id,
     quote_id: m.quote_id ?? "",
     order_id: m.razorpay_order_id,
     seq: null,
@@ -513,8 +547,16 @@ function razorpayOnlyRow(m: MoneyRow): LedgerRow {
     live: true,
     campaign_dry: false,
 
-    verdict_known: false,
-    shop_code: m.quote_id === null ? null : shopCodeForThisStore(),
+    /**
+     * Known once Razorpay's notes carry the decision.
+     *
+     * The notes ride from the Payment Link onto the payment and the order, so
+     * they outlive every file on our side. A payment made before we wrote them
+     * still has its offer id, and the ladder still knows what that offer was
+     * worth — so even those rows show a rung rather than a dash.
+     */
+    verdict_known: m.verdict !== null && appliedBps !== null,
+    shop_code: m.shop_code ?? shopCodeForThisStore(),
     captured_paise: m.amount_paise,
     payment_link_id: m.payment_link_id,
     source: "razorpay",

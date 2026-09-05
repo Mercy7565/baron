@@ -1,4 +1,4 @@
-import { auditLogPath, readAuditRecords, verifyAuditChain } from "@countersign/ledger";
+import { readAuditRecords, verifyAuditChain } from "@countersign/ledger";
 
 import { ConsoleChrome } from "@/components/ConsoleChrome";
 import { couponPercentOf, paidDecisionRows, rowAsText, whyRow } from "@/server/ledger-rows";
@@ -65,9 +65,9 @@ export default async function MerchantAudit() {
 
       {unexplained > 0 && (
         <div className="mc-banner" style={{ marginBottom: 12 }}>
-          {unexplained} of these {rows.length} payments are read from Razorpay only. They are real
-          captures you can find in your dashboard; the decision behind them is no longer in the
-          local log, so their rows say what was charged and not what was asked.
+          {unexplained} of these {rows.length} payments predate the decision being written onto the
+          Razorpay order. Their coupon is read back from the offer that attached, so the rung is
+          exact; what was originally asked for is not recorded on them.
         </div>
       )}
 
@@ -77,10 +77,6 @@ export default async function MerchantAudit() {
       </div>
 
       <LedgerTable rows={rows} why={why} text={text} coupon={coupon} pageText={pageText} />
-
-      <p className="mc-sub no-print" style={{ marginTop: 14, fontSize: 11.5 }}>
-        {auditLogPath()}
-      </p>
     </ConsoleChrome>
   );
 }

@@ -9,6 +9,7 @@ import {
   type RazorpayPayment,
 } from "@countersign/razorpay";
 import { allOrders, type Order } from "@countersign/orders";
+import { OFFER_LADDER } from "@countersign/contracts";
 
 /**
  * What money actually moved, according to Razorpay.
@@ -51,6 +52,20 @@ export interface MoneyRow {
   quote_id: string | null;
   order_id: string | null;
   buyer_user_id: string | null;
+
+  /**
+   * The decision, read back out of the Razorpay notes.
+   *
+   * Razorpay copies a Payment Link's notes onto the payment and onto the order
+   * it creates, so these survive the loss of every file on our side. Null only
+   * for a payment made before the notes carried them.
+   */
+  verdict: string | null;
+  actor_kind: "agent" | "customer" | null;
+  campaign_id: string | null;
+  upsell_sku: string | null;
+  shop_code: string | null;
+  decision_id: string | null;
 
   /** Item names when the log still has them, else a plain sentence. */
   summary: string;
@@ -101,6 +116,44 @@ function noteString(notes: unknown, key: string): string | null {
 function offerOn(order: RazorpayOrder | undefined): string | null {
   const offers = order?.offers;
   return Array.isArray(offers) && offers.length > 0 ? (offers[0] ?? null) : null;
+}
+
+/** A note value that means "there wasn't one", written as such rather than omitted. */
+function realNote(value: string | null): string | null {
+  return value === null || value === "none" || value === "" ? null : value;
+}
+
+/** A numeric note. Absent and unparseable are both null, never zero. */
+function noteNumber(sources: unknown[], key: string): number | null {
+  for (const src of sources) {
+    const raw = noteString(src, key);
+    if (raw === null) continue;
+    const n = Number(raw);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+/** The first source that carries this note. Payment, then link, then order. */
+function firstNote(sources: unknown[], key: string): string | null {
+  for (const src of sources) {
+    const v = noteString(src, key);
+    if (v !== null) return v;
+  }
+  return null;
+}
+
+/**
+ * The rung behind an offer id.
+ *
+ * A payment made before the notes carried `applied_bps` still names its offer,
+ * and the ladder is the only thing that knows what that offer was worth. This
+ * reads the ladder rather than guessing from the amounts.
+ */
+function bpsForOffer(offerId: string | null): number | null {
+  if (offerId === null) return null;
+  const rung = OFFER_LADDER.find((r) => r.offer_id === offerId);
+  return rung === undefined ? null : rung.discount_bps;
 }
 
 function statusOfLink(link: PaymentLinkRow): MoneyRow["status"] {
@@ -230,6 +283,11 @@ async function fromRazorpay(): Promise<{
     const link = linkByPaymentId.get(pay.id) ?? null;
     if (link !== null) linksAccountedFor.add(link.id);
 
+    // Notes ride from the link onto the payment and onto the link's own order,
+    // so any of the three may be the one that still has them.
+    const notes = [pay.notes, link?.notes, order?.notes];
+    const offerId = realNote(firstNote(notes, "offer_id")) ?? offerOn(order);
+
     rows.push({
       key: pay.id,
       status: pay.status === "failed" ? "failed" : "paid",
@@ -239,13 +297,20 @@ async function fromRazorpay(): Promise<{
       payment_link_id: link?.id ?? null,
       razorpay_order_id: pay.order_id,
       short_url: link?.short_url ?? null,
-      offer_id: offerOn(order),
-      asked_bps: null,
-      applied_bps: null,
-      quote_id:
-        noteString(link?.notes, "quote_id") ?? noteString(order?.notes, "quote_id"),
+      offer_id: offerId,
+      asked_bps: noteNumber(notes, "asked_bps"),
+      // The ladder is the fallback: a payment made before the notes carried
+      // applied_bps still names its offer, and the offer knows its own rung.
+      applied_bps: noteNumber(notes, "applied_bps") ?? bpsForOffer(offerId),
+      quote_id: firstNote(notes, "quote_id"),
       order_id: null,
-      buyer_user_id: null,
+      buyer_user_id: realNote(firstNote(notes, "buyer")),
+      verdict: realNote(firstNote(notes, "verdict")),
+      actor_kind: firstNote(notes, "actor") === "agent" ? "agent" : firstNote(notes, "actor") === "customer" ? "customer" : null,
+      campaign_id: realNote(firstNote(notes, "campaign_id")),
+      upsell_sku: realNote(firstNote(notes, "upsell")),
+      shop_code: realNote(firstNote(notes, "shop_code")),
+      decision_id: realNote(firstNote(notes, "decision_id")),
       summary: "",
       lines: [],
       gift_lines: [],
@@ -262,6 +327,9 @@ async function fromRazorpay(): Promise<{
     const orderId = noteString(link.notes, "order_id");
     const order = orderId === null ? undefined : orderById.get(orderId);
 
+    const notes = [link.notes, order?.notes];
+    const offerId = realNote(firstNote(notes, "offer_id")) ?? offerOn(order);
+
     rows.push({
       key: link.id,
       status: statusOfLink(link),
@@ -271,12 +339,18 @@ async function fromRazorpay(): Promise<{
       payment_link_id: link.id,
       razorpay_order_id: orderId,
       short_url: link.short_url,
-      offer_id: offerOn(order),
-      asked_bps: null,
-      applied_bps: null,
-      quote_id: noteString(link.notes, "quote_id"),
+      offer_id: offerId,
+      asked_bps: noteNumber(notes, "asked_bps"),
+      applied_bps: noteNumber(notes, "applied_bps") ?? bpsForOffer(offerId),
+      quote_id: firstNote(notes, "quote_id"),
       order_id: null,
-      buyer_user_id: null,
+      buyer_user_id: realNote(firstNote(notes, "buyer")),
+      verdict: realNote(firstNote(notes, "verdict")),
+      actor_kind: firstNote(notes, "actor") === "agent" ? "agent" : firstNote(notes, "actor") === "customer" ? "customer" : null,
+      campaign_id: realNote(firstNote(notes, "campaign_id")),
+      upsell_sku: realNote(firstNote(notes, "upsell")),
+      shop_code: realNote(firstNote(notes, "shop_code")),
+      decision_id: realNote(firstNote(notes, "decision_id")),
       summary: "",
       lines: [],
       gift_lines: [],
@@ -361,6 +435,14 @@ function fromLocalOnly(order: Order): MoneyRow {
     gift_lines: order.gift_lines ?? [],
     created_at: order.created_at,
     paid_at: order.paid_at,
+    // The local order already carries the decision in its own fields; these
+    // exist for rows that only have Razorpay's notes to go on.
+    verdict: order.verdict,
+    actor_kind: order.agent_id !== "" && order.agent_id !== "unknown" ? "agent" : "customer",
+    campaign_id: null,
+    upsell_sku: null,
+    shop_code: null,
+    decision_id: null,
     source: "local",
   };
 }
