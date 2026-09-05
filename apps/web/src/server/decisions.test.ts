@@ -80,6 +80,7 @@ describe("a payment Razorpay reports but the log cannot explain", () => {
     campaign_dry: false,
     verdict_known: false,
     shop_code: "BARON-SKIN",
+    upsell_sku: null,
     captured_paise: 151_122,
     payment_link_id: "plink_x",
     source: "razorpay" as const,

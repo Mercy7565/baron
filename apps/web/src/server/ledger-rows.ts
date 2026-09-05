@@ -81,6 +81,8 @@ export interface LedgerRow {
   verdict_known: boolean;
   /** The shop this was bought from, when the row can be tied to one. */
   shop_code: string | null;
+  /** The add-on that was suggested, when one was. */
+  upsell_sku: string | null;
   /** What Razorpay actually took, which is not always what was asked for. */
   captured_paise: number | null;
   payment_link_id: string | null;
@@ -196,6 +198,7 @@ export function ledgerRows(): LedgerRow[] {
       // do not.
       verdict_known: true,
       shop_code: shopCodeForThisStore(),
+      upsell_sku: q.upsell[0]?.sku_id ?? null,
       captured_paise: order?.status === "paid" ? order.amount_paise : null,
       payment_link_id: q.payment_link_id,
       source: "local",
@@ -246,7 +249,7 @@ export function causeOf(r: LedgerRow): string {
    * both. What it must not do is run the branches below, which reason about
    * margin and cart-size gates from a margin this row does not have.
    */
-  if (!r.verdict_known) {
+  if (r.source === "razorpay") {
     const allowed =
       r.applied_bps > 0
         ? `Allowed ${r.applied_bps / 100}%${r.offer_id === null ? "" : ` (${r.offer_id})`}.`
@@ -307,7 +310,7 @@ export function causeOf(r: LedgerRow): string {
 export function whyRow(r: LedgerRow): string {
   const parts: string[] = [];
 
-  if (!r.verdict_known) {
+  if (r.source === "razorpay") {
     parts.push(
       r.asked_bps > 0
         ? `Asked ${r.asked_bps / 100}%. Allowed ${r.applied_bps / 100}%.`
@@ -373,7 +376,7 @@ export function whyRow(r: LedgerRow): string {
 
 /** The copy-to-clipboard form of one row: readable, and complete enough to audit. */
 export function rowAsText(r: LedgerRow): string {
-  if (!r.verdict_known) {
+  if (r.source === "razorpay") {
     return [
       `Time          ${new Date(r.ts).toISOString()}`,
       `Shop          ${r.shop_code ?? "(unknown)"}`,
@@ -523,7 +526,7 @@ function razorpayOnlyRow(m: MoneyRow): LedgerRow {
           ? `${coupon} allowed`
           : "no coupon",
     campaign: campaignNameOf(m.campaign_id) ?? m.campaign_id,
-    upsell_accepted: m.upsell_sku === null ? null : true,
+    upsell_accepted: null,
     asked_bps: askedBps ?? 0,
     applied_bps: appliedBps ?? 0,
     offer_id: m.offer_id,
@@ -557,6 +560,7 @@ function razorpayOnlyRow(m: MoneyRow): LedgerRow {
      */
     verdict_known: m.verdict !== null && appliedBps !== null,
     shop_code: m.shop_code ?? shopCodeForThisStore(),
+    upsell_sku: m.upsell_sku,
     captured_paise: m.amount_paise,
     payment_link_id: m.payment_link_id,
     source: "razorpay",

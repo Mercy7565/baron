@@ -118,12 +118,16 @@ export function LedgerTable({
                   <td style={{ maxWidth: 220 }}>{r.found}</td>
                   <td>{r.campaign ?? <span className="mc-tiny">none</span>}</td>
                   <td>
-                    {r.upsell_accepted === null ? (
-                      <span className="mc-tiny">not offered</span>
-                    ) : (
+                    {/* Three states, not two: a row can know an add-on was
+                        suggested without knowing what the shopper said. */}
+                    {r.upsell_accepted !== null ? (
                       <span className="mc-pill" data-tone={r.upsell_accepted ? "live" : "paused"}>
                         {r.upsell_accepted ? "accepted" : "declined"}
                       </span>
+                    ) : r.upsell_sku !== null ? (
+                      <span className="mc-pill">offered</span>
+                    ) : (
+                      <span className="mc-tiny">not offered</span>
                     )}
                   </td>
                   <td className="num" style={{ whiteSpace: "nowrap" }}>
