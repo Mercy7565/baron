@@ -1,6 +1,8 @@
 import { allOrders } from "@countersign/orders";
 import { allQuotes, isExpired } from "@countersign/quotes";
 
+import { POST as createQuote } from "@/app/api/quotes/route";
+import { POST as approveQuote } from "@/app/api/quotes/[id]/approve/route";
 import { issueLinkForQuote } from "@/server/checkout";
 import { payable, readBasket } from "@/server/cart";
 import { enteredCode } from "@/server/shop-code";
@@ -125,8 +127,6 @@ export async function POST(request: Request): Promise<Response> {
       ? body.mandate_hash
       : mintAndRegisterDemoIntent().hash;
 
-  const origin = new URL(request.url).origin;
-
   const reusable = allQuotes()
     .filter(
       (q) =>
@@ -144,7 +144,17 @@ export async function POST(request: Request): Promise<Response> {
   let quoteId = reusable?.quote_id ?? null;
 
   if (quoteId === null) {
-    const priced = (await fetch(`${origin}/api/quotes`, {
+    /**
+     * Priced in process, not over loopback.
+     *
+     * This used to `fetch` its own /api/quotes. On a serverless host that
+     * second request can land on a different instance — and the mandate minted
+     * a few lines above lives in this instance's memory, so the other one
+     * answered 402 and the shopper was told "we could not price that bag"
+     * about a perfectly ordinary basket. Same failure the propose path had, and
+     * the same fix: call the handler, do not phone it.
+     */
+    const inner = new Request("https://baron.internal/api/quotes", {
       method: "POST",
       headers: { "content-type": "application/json", cookie: request.headers.get("cookie") ?? "" },
       body: JSON.stringify({
@@ -168,7 +178,12 @@ export async function POST(request: Request): Promise<Response> {
             from_campaign_id: l.from_campaign_id ?? null,
           })),
       }),
-    }).then((r) => r.json())) as { quote_id?: string | null; reason?: string };
+    });
+
+    const priced = (await (await createQuote(inner)).json()) as {
+      quote_id?: string | null;
+      reason?: string;
+    };
 
     if (priced.quote_id == null) {
       return Response.json(
@@ -179,9 +194,9 @@ export async function POST(request: Request): Promise<Response> {
     quoteId = priced.quote_id;
   }
 
-  await fetch(`${origin}/api/quotes/${quoteId}/approve`, {
-    method: "POST",
-    headers: { cookie: request.headers.get("cookie") ?? "" },
+  // Also in process, for the same reason.
+  await approveQuote(new Request("https://baron.internal/approve", { method: "POST" }), {
+    params: Promise.resolve({ id: quoteId }),
   });
 
   const issued = await issueLinkForQuote({

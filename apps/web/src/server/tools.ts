@@ -19,6 +19,7 @@ import { type Campaign, pick } from "@countersign/campaigns";
 import { CAMPAIGNS, isCampaignActive } from "@/lib/campaigns";
 import { CATALOG, baseUrl } from "@/lib/catalog";
 import { DEV_POLICY } from "@/lib/policy";
+import { POST as proposeRoute } from "@/app/api/checkout/propose/route";
 import { addLine, payable, removeLine, type BasketLine } from "@/server/cart";
 
 export interface ToolCall {
@@ -175,7 +176,14 @@ export async function propose_money_action(input: ProposeToolInput): Promise<{
 }> {
   const lines = payable(input.lines);
 
-  const res = await fetch(`${baseUrl()}/api/checkout/propose`, {
+  /**
+   * Called in process, not over loopback.
+   *
+   * A second HTTP hop can land on another serverless instance, and the mandate
+   * registry lives in memory — so the other instance answers 402 for a mandate
+   * this one just minted. Same failure the propose path already had once.
+   */
+  const inner = new Request("https://baron.internal/api/checkout/propose", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
@@ -192,6 +200,7 @@ export async function propose_money_action(input: ProposeToolInput): Promise<{
     }),
   });
 
+  const res = await proposeRoute(inner);
   const text = await res.text();
   let body: unknown;
   try {

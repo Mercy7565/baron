@@ -1,4 +1,5 @@
 import { getSession, updateSession } from "@/server/acp";
+import { POST as proposeRoute } from "@/app/api/checkout/propose/route";
 import { baseUrl } from "@/lib/catalog";
 import { lookupMandate, mandateRequiredResponse } from "@/server/mandates";
 
@@ -39,7 +40,8 @@ export async function POST(
     return Response.json({ error: "session has no items" }, { status: 400 });
   }
 
-  const res = await fetch(`${baseUrl()}/api/checkout/propose`, {
+  // In process: a loopback can reach an instance that never saw this mandate.
+  const res = await proposeRoute(new Request(`${baseUrl()}/api/checkout/propose`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
@@ -54,7 +56,7 @@ export async function POST(
       campaign_id: session.campaign_id,
       mandate_hash: session.mandate_hash,
     }),
-  });
+  }));
 
   const text = await res.text();
   let result: unknown;

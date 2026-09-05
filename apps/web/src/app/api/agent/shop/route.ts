@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { priceCart } from "@countersign/catalog";
 import { signResume, verifyResume } from "@countersign/resume";
 
+import { POST as createQuote } from "@/app/api/quotes/route";
+import { POST as approveQuote } from "@/app/api/quotes/[id]/approve/route";
 import { CATALOG } from "@/lib/catalog";
 import { recommend } from "@/server/recommend";
 import { resolveSku } from "@/server/tools";
@@ -87,10 +89,12 @@ async function toQuote(
   mandateHash: string,
   buyerUserId: string,
 ): Promise<{ status: number; body: Record<string, unknown> }> {
-  const quoteRes = await fetch(`${origin}/api/quotes`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
+  // In process: a loopback can reach an instance that never saw this mandate.
+  const quoteRes = await createQuote(
+    new Request("https://baron.internal/api/quotes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
       buyer_user_id: buyerUserId,
       agent_id: "outside_shopper_ai",
       mandate_hash: mandateHash,
@@ -98,8 +102,9 @@ async function toQuote(
       // Deliberately no requested_discount_bps: the store gives this basket the
       // best coupon it can clear. An outside agent demanding a figure is what a
       // CLAMP is for, and this is the store's own path, not that.
+      }),
     }),
-  });
+  );
 
   const quote = (await quoteRes.json()) as {
     quote_id?: string | null;
@@ -129,7 +134,9 @@ async function toQuote(
     };
   }
 
-  await fetch(`${origin}/api/quotes/${quote.quote_id}/approve`, { method: "POST" });
+  await approveQuote(new Request("https://baron.internal/approve", { method: "POST" }), {
+    params: Promise.resolve({ id: quote.quote_id }),
+  });
 
   return {
     status: 200,
