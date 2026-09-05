@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 
 import type { CartLine } from "@countersign/catalog";
 
+import { cookieOptions, SHOPPING_MAX_AGE } from "@/server/cookie-options";
 import { signValue, verifyValue } from "@/server/sign";
 
 /**
@@ -184,12 +185,7 @@ export async function writeBasket(shopCode: string, lines: BasketLine[]): Promis
   const jar = await cookies();
   const value = await signValue(JSON.stringify(toStored(shopCode, lines)));
 
-  jar.set(CART_COOKIE, value, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  jar.set(CART_COOKIE, value, cookieOptions(SHOPPING_MAX_AGE));
 
   return lines;
 }

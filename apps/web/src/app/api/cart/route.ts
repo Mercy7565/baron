@@ -1,7 +1,8 @@
 import { productById } from "@countersign/catalog";
 
 import { CATALOG } from "@/lib/catalog";
-import { readBasket, writeBasket, type BasketLine } from "@/server/cart";
+import { payable, readBasket, writeBasket, type BasketLine } from "@/server/cart";
+import { couponFor } from "@/server/coupons";
 import { enteredCode } from "@/server/shop-code";
 import { add_to_cart, get_cart, remove_from_cart, suggest_upsell } from "@/server/tools";
 
@@ -46,8 +47,38 @@ function view(lines: BasketLine[], shopCode: string | null) {
       };
     });
 
+  /**
+   * The price, worked out here rather than by the browser.
+   *
+   * The basket page used to mint a mandate in one request and then ask
+   * /api/quotes for a price in another. Two requests, two serverless instances,
+   * and a mandate registry that lives in memory — so the second instance had
+   * never heard of the mandate, answered 402, and the page said "we could not
+   * price that bag" about a perfectly ordinary basket. A laptop reusing one
+   * warm instance usually got away with it; a phone opening fresh connections
+   * did not.
+   *
+   * `couponFor` runs the same `evaluate()` the quote path runs, against the
+   * same policy, in this process. No mandate is involved because nothing is
+   * being authorised — this is a price on a screen, not a payment.
+   */
+  const charged = payable(lines);
+  const coupon = charged.length === 0 ? null : couponFor(charged);
+
   return {
     shop_code: shopCode,
+    quote:
+      coupon === null
+        ? null
+        : {
+            subtotal_paise: coupon.subtotal_paise,
+            applied_bps: coupon.applied_bps,
+            offer_id: coupon.offer_id,
+            discount_paise: coupon.discount_paise,
+            legal_total_paise: coupon.total_paise,
+            verdict: coupon.verdict,
+            campaign_name: coupon.campaign?.name ?? null,
+          },
     // Raw bag, gifts included and flagged, each with its title so the basket
     // can show a free line without a second lookup.
     lines: lines.map((l) => ({

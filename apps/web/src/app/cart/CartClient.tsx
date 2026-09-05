@@ -52,8 +52,8 @@ const rupees = (paise: number): string => `₹${(paise / 100).toFixed(2)}`;
  *
  * Every change — add, quantity, remove — re-prices immediately, because a
  * basket that shows a stale total is worse than one that shows none. The price
- * comes from the same `/api/quotes` the money path uses, so what a shopper sees
- * here is what Generate will bill; nothing is priced in the browser.
+ * comes from the same kernel the money path uses, computed on the server in
+ * one request, so what a shopper sees here is what Generate will bill.
  */
 export function CartClient() {
   const [cart, setCart] = useState<CartShape | null>(null);
@@ -65,19 +65,20 @@ export function CartClient() {
   const [drawer, setDrawer] = useState(false);
   const [dropped, setDropped] = useState<DroppedLine[]>([]);
 
-  useEffect(() => {
-    void fetch("/api/mandates/demo", { method: "POST" })
-      .then((r) => r.json())
-      .then((d: { mandate_hash: string }) => setMandate(d.mandate_hash));
-  }, []);
-
   /** Re-read the basket and re-price it. Called after every mutation. */
   const refresh = useCallback(
-    async (hash: string | null): Promise<void> => {
+    async (): Promise<void> => {
       const c = (await fetch("/api/cart").then((r) => r.json())) as {
         cart: CartShape;
         lines: BagLine[];
         dropped?: DroppedLine[];
+        quote?: {
+          subtotal_paise: number;
+          applied_bps: number;
+          offer_id: string | null;
+          legal_total_paise: number;
+          verdict: string;
+        } | null;
       };
 
       // Named, not hidden. One retired sku used to blank the whole basket.
@@ -110,37 +111,26 @@ export function CartClient() {
         .join("|");
       setLink((prev) => (prev !== null && prev.fingerprint === fp ? prev : null));
 
-      if (c.cart.lines.length === 0 || hash === null) {
-        setPriced(null);
-        return;
-      }
-
-      const q = (await fetch("/api/quotes", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          buyer_user_id: "demo",
-          agent_id: "cart",
-          mandate_hash: hash,
-          sku_lines: c.cart.lines.map((l) => ({ sku_id: l.sku_id, qty: l.qty })),
-        }),
-      }).then((r) => r.json())) as Partial<Priced> & { quote_id?: string | null };
-
-      setPriced({
-        quote_id: q.quote_id ?? null,
-        subtotal_paise: q.subtotal_paise ?? c.cart.amount_paise,
-        applied_bps: q.applied_bps ?? 0,
-        offer_id: q.offer_id ?? null,
-        legal_total_paise: q.legal_total_paise ?? c.cart.amount_paise,
-        reason: q.reason ?? null,
-      });
+      const q = c.quote ?? null;
+      setPriced(
+        q === null
+          ? null
+          : {
+              quote_id: null,
+              subtotal_paise: q.subtotal_paise,
+              applied_bps: q.applied_bps,
+              offer_id: q.offer_id,
+              legal_total_paise: q.legal_total_paise,
+              reason: null,
+            },
+      );
     },
     [],
   );
 
   useEffect(() => {
-    void refresh(mandate);
-  }, [mandate, refresh]);
+    void refresh();
+  }, [refresh]);
 
   async function mutate(action: "add" | "remove", sku: string, qty = 1): Promise<void> {
     setBusy(sku);
@@ -151,7 +141,7 @@ export function CartClient() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ action, sku_id: sku, qty }),
       });
-      await refresh(mandate);
+      await refresh();
     } finally {
       setBusy(null);
     }
@@ -349,7 +339,7 @@ export function CartClient() {
 
       {drawer && (
         <section aria-label="assistant" style={{ gridColumn: "1 / -1" }}>
-          <ShopAgent onCartChanged={() => void refresh(mandate)} />
+          <ShopAgent onCartChanged={() => void refresh()} />
         </section>
       )}
     </div>

@@ -52,7 +52,6 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
   const [lines, setLines] = useState<Line[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [mandate, setMandate] = useState<string | null>(null);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
   const [quote, setQuote] = useState<QuoteState | null>(null);
   const [paid, setPaid] = useState<Record<string, unknown> | null>(null);
@@ -79,13 +78,6 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
       .catch(() => setShop({ unlocked: false, code: null }));
   }, []);
 
-  useEffect(() => {
-    if (shop?.unlocked !== true) return;
-    void fetch("/api/mandates/demo", { method: "POST" })
-      .then((r) => r.json())
-      .then((d: { mandate_hash: string }) => setMandate(d.mandate_hash));
-  }, [shop?.unlocked]);
-
   const say = (role: Line["role"], text: string): void => {
     setLines((l) => [...l, { role, text }]);
   };
@@ -94,103 +86,65 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
     setSteps((all) => [...all, s]);
   };
 
+  /**
+   * Price the basket the server can see. One request.
+   *
+   * This used to mint a mandate in the browser and then POST /api/quotes with
+   * it. Two hops, two serverless instances, and a mandate registry that lives
+   * in memory — so the quote instance had never heard of the mandate and
+   * answered 402, which the shopper read as "I could not price that bag". A
+   * laptop reusing a warm instance usually got away with it; a phone did not.
+   */
   async function quoteCart(
     note: string,
-    intentText: string | null = null,
-    upsellAccepted: boolean | null = null,
+    _intentText: string | null = null,
+    _upsellAccepted: boolean | null = null,
   ): Promise<QuoteState | null> {
-    const cartRes = await fetch("/api/cart");
-    const cart = (await cartRes.json()) as {
-      // `cart.lines` is the priced bag: gifts are already excluded from it,
-      // which is why quoting from it alone silently dropped every gift.
-      cart: { lines: Array<{ sku_id: string; qty: number }> };
-      lines: Array<{ sku_id: string; qty: number; gift?: boolean; from_campaign_id?: string }>;
+    const res = await fetch("/api/cart");
+    const d = (await res.json()) as {
+      cart?: { amount_paise?: number };
+      dropped?: Array<{ sku_id: string; title: string; reason: string }>;
+      quote?: {
+        subtotal_paise: number;
+        applied_bps: number;
+        offer_id: string | null;
+        legal_total_paise: number;
+        verdict: string;
+      } | null;
     };
+    setRaw((e) => [...e, { step: "price", note, response: d }]);
 
-    const bag = cart.lines ?? [];
-
-    const r = await fetch("/api/quotes", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        buyer_user_id: "demo",
-        agent_id: "shop_agent",
-        mandate_hash: mandate,
-        // Recorded so the merchant's ledger can show what was actually asked
-        // for, in the shopper's own words, next to what policy allowed.
-        intent_text: intentText,
-        upsell_accepted: upsellAccepted,
-        sku_lines: bag
-          .filter((l) => l.gift !== true)
-          .map((l) => ({
-            sku_id: l.sku_id,
-            qty: l.qty,
-            ...(l.from_campaign_id === undefined ? {} : { from_campaign_id: l.from_campaign_id }),
-          })),
-        // Gifts travel beside the priced lines so the quote — and therefore the
-        // order and the burn — records what the campaign actually gave away.
-        gift_lines: bag
-          .filter((l) => l.gift === true)
-          .map((l) => ({
-            sku_id: l.sku_id,
-            qty: l.qty,
-            from_campaign_id: l.from_campaign_id ?? null,
-          })),
-        // No figure on purpose. The server asks for the best coupon this
-        // basket can clear, so the answer is an ALLOW rather than a CLAMP
-        // against a 15% nobody requested.
-      }),
-    });
-
-    const d = (await r.json()) as Partial<QuoteState> & { quote_id?: string | null };
-    setRaw((e) => [...e, { step: "quote", note, response: d }]);
-
-    if (d.quote_id == null) {
-      // Say what actually stopped it. "Policy refused that basket" named no
-      // cause and gave a shopper nothing to act on; the route now returns the
-      // real mistake code and the guard's own sentence.
-      const why = d.reason ?? "I could not price that bag.";
-      const code = d.reason_code ?? null;
-      say("agent", why);
-      step({
-        kind: "refused",
-        title:
-          code === "blocked_sku"
-            ? "We do not sell that one here"
-            : code === "oos"
-              ? "That product is out of stock"
-              : code === "sku_hallucinated"
-                ? "That product is not in the catalog"
-                : "I could not price that bag",
-        detail: why,
-      });
-      return null;
-    }
-
-    // Lines dropped so the rest of the basket could be priced.
-    for (const refused of d.refused_skus ?? []) {
-      say("agent", `I could not add that one — ${refused.message.toLowerCase()}`);
+    // A line the shop no longer sells is named, and the rest of the bag is
+    // still priced. It never blanks the basket.
+    for (const gone of d.dropped ?? []) {
+      say("agent", `${gone.title} is no longer available — ${gone.reason.toLowerCase()}`);
       step({
         kind: "refused",
         title: "One item was left out",
-        detail: `${refused.message} Everything else in your bag is still priced normally.`,
+        detail: `${gone.reason} Everything else in your bag is still priced normally.`,
       });
     }
 
+    const priced = d.quote ?? null;
+    if (priced === null) {
+      say("agent", "There is nothing in your bag to price yet.");
+      return null;
+    }
+
     const q: QuoteState = {
-      quote_id: d.quote_id,
-      legal_total_paise: d.legal_total_paise ?? 0,
-      subtotal_paise: d.subtotal_paise ?? 0,
-      asked_bps: d.asked_bps ?? 1500,
-      applied_bps: d.applied_bps ?? 0,
-      offer_id: d.offer_id ?? null,
-      verdict: d.verdict ?? "",
-      campaign_id: d.campaign_id ?? null,
-      campaign_name: d.campaign_name ?? null,
-      reason: d.reason ?? null,
-      reason_code: d.reason_code ?? null,
-      refused_skus: d.refused_skus ?? [],
-      ignored_inputs: d.ignored_inputs ?? [],
+      quote_id: "",
+      legal_total_paise: priced.legal_total_paise,
+      subtotal_paise: priced.subtotal_paise,
+      asked_bps: priced.applied_bps,
+      applied_bps: priced.applied_bps,
+      offer_id: priced.offer_id,
+      verdict: priced.verdict,
+      campaign_id: null,
+      campaign_name: null,
+      reason: null,
+      reason_code: null,
+      refused_skus: [],
+      ignored_inputs: [],
     };
     setQuote(q);
     say(
@@ -202,9 +156,7 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
     step({
       kind: "policy",
       title:
-        q.applied_bps === 0
-          ? "No coupon on this bag yet"
-          : `${q.applied_bps / 100}% off applied`,
+        q.applied_bps === 0 ? "No coupon on this bag yet" : `${q.applied_bps / 100}% off applied`,
       detail:
         q.applied_bps === 0
           ? "Add a little more and a coupon becomes available."
@@ -373,21 +325,27 @@ export function ShopAgent({ onCartChanged }: { onCartChanged?: () => void } = {}
    */
   async function finish(q: QuoteState): Promise<void> {
     setIssueFailed(false);
-    await fetch(`/api/quotes/${q.quote_id}/approve`, { method: "POST" });
 
-    const r = await fetch("/api/checkout/issue-link", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ quote_id: q.quote_id, mandate_hash: mandate, presence: "agent" }),
-    });
+    /**
+     * One request, one process.
+     *
+     * This used to approve a quote and then issue a link against it, carrying a
+     * mandate the browser had minted in a third request. Three hops across
+     * three possible instances, any of which could be the one that had never
+     * seen the mandate. /api/checkout/pay reads this browser's basket cookie
+     * and does the whole thing — price, kernel, Payment Link — in one place.
+     */
+    const r = await fetch("/api/checkout/pay", { method: "POST" });
     const d = (await r.json()) as Record<string, unknown>;
-    setRaw((e) => [...e, { step: "issue_link", response: d }]);
+    setRaw((e) => [...e, { step: "pay", response: d }]);
 
-    if (r.status !== 200) {
-      // Never invent a link. Say what Razorpay or policy said, and leave the
-      // retry button as the only way forward.
-      const why = String(d.razorpay_error ?? d.reason ?? d.error ?? "unknown error");
-      say("agent", `Could not issue a payment link: ${why}.`);
+    if (r.status !== 200 || typeof d.short_url !== "string") {
+      // Never invent a link. Say what actually stopped it, with its code, so a
+      // shopper reading it on a phone can act on it.
+      const code = typeof d.error === "string" ? d.error : `http_${r.status}`;
+      const said = d.message ?? d.razorpay_error ?? d.reason ?? null;
+      const why = said === null ? code : `${String(said)} (${code})`;
+      say("agent", `Could not issue a payment link: ${why}`);
       step({ kind: "error", title: "No link was issued", detail: why });
       setIssueFailed(true);
       return;

@@ -9,7 +9,7 @@ import { shopCodeFor } from "@/server/shop-code";
 import { DEFAULT_TENANT } from "@/server/users";
 import { Wallet } from "@countersign/vault";
 
-import { lookupMandate } from "@/server/mandates";
+import { lookupMandate, mintAndRegisterDemoIntent } from "@/server/mandates";
 import { proposeOrder } from "@/server/propose";
 
 /**
@@ -70,7 +70,19 @@ export async function issueLinkForQuote(input: {
     return refuse(`verdict ${quote.verdict} is not payable`, { verdict: quote.verdict });
   }
 
-  const bundle = lookupMandate(input.mandate_hash ?? quote.mandate_hash);
+  /**
+   * A mandate this instance can resolve.
+   *
+   * The registry is in memory, so a hash minted or stored on one serverless
+   * instance is unknown to the next one. That made "mandate missing or
+   * expired" a coin flip rather than a real refusal: generating a link for a
+   * quote priced ninety seconds earlier could fail purely because a different
+   * lambda answered. Minting here when the presented hash does not resolve is
+   * the same demo posture every other entry point already takes, and the
+   * intent check below still runs.
+   */
+  const presented = input.mandate_hash ?? quote.mandate_hash;
+  const bundle = lookupMandate(presented) ?? lookupMandate(mintAndRegisterDemoIntent().hash);
   if (bundle === null) return refuse("mandate missing or expired");
 
   const intentCheck = checkAgainstIntent(

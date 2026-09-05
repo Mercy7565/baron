@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { cookieOptions, SHOPPING_MAX_AGE } from "@/server/cookie-options";
 import { requireRole } from "@/server/require-role";
 import { SHOP_CODE_COOKIE, enteredCode, normaliseCode, tenantForCode } from "@/server/shop-code";
 
@@ -33,12 +34,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const jar = await cookies();
-  jar.set(SHOP_CODE_COOKIE, code, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  jar.set(SHOP_CODE_COOKIE, code, cookieOptions(SHOPPING_MAX_AGE));
 
   return Response.json({ ok: true, code, tenant_id: tenant });
 }

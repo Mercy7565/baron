@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { cookieOptions, SESSION_MAX_AGE } from "@/server/cookie-options";
 import { SESSION_COOKIE, encodeSession } from "@/server/session";
 import { authenticate } from "@/server/users";
 
@@ -35,12 +36,7 @@ export async function POST(request: Request): Promise<Response> {
   });
 
   const jar = await cookies();
-  jar.set(SESSION_COOKIE, value, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 8,
-  });
+  jar.set(SESSION_COOKIE, value, cookieOptions(SESSION_MAX_AGE));
 
   return Response.json({ ok: true, username: result.username, role: result.role });
 }

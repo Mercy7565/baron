@@ -7,7 +7,7 @@ import { issueLinkForQuote } from "@/server/checkout";
 import { payable, readBasket } from "@/server/cart";
 import { enteredCode } from "@/server/shop-code";
 import { cartFingerprint } from "@/server/fingerprint";
-import { mintAndRegisterDemoIntent } from "@/server/mandates";
+import { lookupMandate, mintAndRegisterDemoIntent } from "@/server/mandates";
 import { buyerId } from "@/server/require-role";
 
 export const dynamic = "force-dynamic";
@@ -121,10 +121,24 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  // A live quote for exactly this basket, or a fresh one.
+  /**
+   * A mandate this instance can actually resolve.
+   *
+   * The browser used to mint one at /api/mandates/demo and send it here. That
+   * mint landed in one lambda's memory and this request is very often a
+   * different lambda, so the hash resolved to nothing and the quote came back
+   * 402 — surfacing to the shopper as "we could not price that bag". A laptop
+   * reusing a warm instance mostly got away with it; a phone opening fresh
+   * connections did not.
+   *
+   * A hash that does resolve here is honoured, because that is a caller who
+   * genuinely holds a mandate. One that does not is replaced rather than
+   * trusted, which is the same demo posture every other entry point takes.
+   */
+  const presented = typeof body.mandate_hash === "string" ? body.mandate_hash : null;
   const mandateHash =
-    typeof body.mandate_hash === "string" && body.mandate_hash !== ""
-      ? body.mandate_hash
+    presented !== null && lookupMandate(presented) !== null
+      ? presented
       : mintAndRegisterDemoIntent().hash;
 
   const reusable = allQuotes()
@@ -183,11 +197,29 @@ export async function POST(request: Request): Promise<Response> {
     const priced = (await (await createQuote(inner)).json()) as {
       quote_id?: string | null;
       reason?: string;
+      error?: string;
+      refused_skus?: unknown[];
     };
 
     if (priced.quote_id == null) {
+      /**
+       * Say what actually stopped it.
+       *
+       * "We could not price that bag" was the only thing a shopper ever saw,
+       * whatever the cause — a mandate that did not resolve, a blocked sku, an
+       * empty basket. One sentence covering four different problems is a
+       * sentence nobody can act on.
+       */
       return Response.json(
-        { error: priced.reason ?? "We could not price that bag." },
+        {
+          error: typeof priced.error === "string" ? priced.error : "not_quotable",
+          message:
+            priced.reason ??
+            (typeof priced.error === "string"
+              ? `The basket was refused: ${priced.error}.`
+              : "The basket could not be priced."),
+          refused_skus: priced.refused_skus ?? [],
+        },
         { status: 409 },
       );
     }
