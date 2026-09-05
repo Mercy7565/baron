@@ -167,8 +167,31 @@ export async function POST(request: Request): Promise<Response> {
   // and it says cancelled.
   const closed = found.localOrderId === null ? null : markClosed(found.localOrderId, cancelled);
 
+  /**
+   * Nothing was cancelled anywhere.
+   *
+   * Razorpay refused and we had no local row to close either, so there is no
+   * sense in which this worked. Answering 200 with `ok: false` reads as success
+   * to a UI and to a person — the same shape of lie as "no such order" was.
+   */
+  if (!cancelled && closed === null) {
+    const missing = razorpayError !== null && /404/.test(razorpayError);
+    return Response.json(
+      {
+        ok: false,
+        error: missing ? "no_such_link" : "cancel_refused",
+        message: missing
+          ? "Razorpay has no link with that id. Refresh your orders and try again."
+          : `That link could not be cancelled: ${razorpayError ?? "unknown reason"}.`,
+        payment_link_id: found.linkId,
+        razorpay_error: razorpayError,
+      },
+      { status: missing ? 404 : 409 },
+    );
+  }
+
   return Response.json({
-    ok: cancelled || closed !== null,
+    ok: true,
     payment_link_id: found.linkId,
     order: closed,
     cancelled_at_razorpay: cancelled,
