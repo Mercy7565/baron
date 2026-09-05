@@ -19,7 +19,7 @@ import { type Campaign, pick } from "@countersign/campaigns";
 import { CAMPAIGNS, isCampaignActive } from "@/lib/campaigns";
 import { CATALOG, baseUrl } from "@/lib/catalog";
 import { DEV_POLICY } from "@/lib/policy";
-import { addToCart, getCart, removeFromCart } from "@/server/cart";
+import { addLine, payable, removeLine, type BasketLine } from "@/server/cart";
 
 export interface ToolCall {
   tool: string;
@@ -41,29 +41,31 @@ export function lookup_skus(ids: string[]): { found: Product[]; not_found: strin
 
 // ---------------------------------------------------------------------- cart
 
+/**
+ * These take the basket itself rather than an id.
+ *
+ * They used to look a bag up in a process-wide Map keyed by one shared
+ * constant, which on a serverless host meant "whichever instance answered, and
+ * whoever else was shopping". The basket now travels in the shopper's cookie,
+ * so the caller reads it once and hands it here.
+ */
 export function add_to_cart(
-  cartId: string,
+  lines: BasketLine[],
   skuId: string,
   qty = 1,
   origin?: { campaign_id: string; gift?: boolean },
 ) {
-  const lines = addToCart(cartId, skuId, qty, origin);
+  const next = addLine(lines, skuId, qty, origin);
   // Gifts are in the bag but not in the price.
-  return { lines, cart: priceCart(CATALOG, payable(lines)) };
+  return { lines: next, cart: priceCart(CATALOG, payable(next)) };
 }
 
-/** Charged lines only. A gift is shipped, never billed. */
-function payable(lines: Array<{ sku_id: string; qty: number; gift?: boolean }>) {
-  return lines.filter((l) => l.gift !== true).map((l) => ({ sku_id: l.sku_id, qty: l.qty }));
+export function remove_from_cart(lines: BasketLine[], skuId: string) {
+  const next = removeLine(lines, skuId);
+  return { lines: next, cart: priceCart(CATALOG, payable(next)) };
 }
 
-export function remove_from_cart(cartId: string, skuId: string) {
-  const lines = removeFromCart(cartId, skuId);
-  return { lines, cart: priceCart(CATALOG, payable(lines)) };
-}
-
-export function get_cart(cartId: string) {
-  const lines = getCart(cartId);
+export function get_cart(lines: BasketLine[]) {
   return { lines, cart: priceCart(CATALOG, payable(lines)) };
 }
 
@@ -84,8 +86,8 @@ export interface UpsellSuggestion {
  * The reason text may mention that a bigger basket could reach a higher rung.
  * It is careful to say "may" — the kernel decides, and it can still clamp.
  */
-export function suggest_upsell(cartId: string): UpsellSuggestion[] {
-  const lines = getCart(cartId);
+export function suggest_upsell(basket: BasketLine[]): UpsellSuggestion[] {
+  const lines = payable(basket);
   if (lines.length === 0) return [];
 
   const current = priceCart(CATALOG, lines);
@@ -131,9 +133,8 @@ function highestRungWithin(headroomBps: number): number {
 
 // ------------------------------------------------------------------ campaign
 
-export function apply_campaign(cartId: string, now = new Date()) {
-  const lines = getCart(cartId);
-  const cart = priceCart(CATALOG, lines);
+export function apply_campaign(basket: BasketLine[], now = new Date()) {
+  const cart = priceCart(CATALOG, payable(basket));
   const live: Campaign[] = CAMPAIGNS.map((c) => ({ ...c, active: isCampaignActive(c.id) }));
   return pick(live, CATALOG, cart, now);
 }
@@ -151,6 +152,8 @@ export function list_campaigns(now = new Date()) {
 
 export interface ProposeToolInput {
   cart_id: string;
+  /** The basket itself. The id is a label for the audit trail, not a lookup. */
+  lines: BasketLine[];
   requested_discount_bps: number;
   requested_offer_id?: string | null;
   /** What the agent said out loud, if it quoted a total. Compared, then dropped. */
@@ -170,7 +173,7 @@ export async function propose_money_action(input: ProposeToolInput): Promise<{
   status: number;
   body: unknown;
 }> {
-  const lines = getCart(input.cart_id);
+  const lines = payable(input.lines);
 
   const res = await fetch(`${baseUrl()}/api/checkout/propose`, {
     method: "POST",

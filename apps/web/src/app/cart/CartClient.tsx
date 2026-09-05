@@ -29,6 +29,13 @@ interface BagLine {
   title?: string;
 }
 
+/** A line the catalog no longer sells, named rather than silently vanished. */
+interface DroppedLine {
+  sku_id: string;
+  title: string;
+  reason: string;
+}
+
 interface Priced {
   quote_id: string | null;
   subtotal_paise: number;
@@ -56,6 +63,7 @@ export function CartClient() {
   const [link, setLink] = useState<{ url: string; fingerprint: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [drawer, setDrawer] = useState(false);
+  const [dropped, setDropped] = useState<DroppedLine[]>([]);
 
   useEffect(() => {
     void fetch("/api/mandates/demo", { method: "POST" })
@@ -69,7 +77,11 @@ export function CartClient() {
       const c = (await fetch("/api/cart").then((r) => r.json())) as {
         cart: CartShape;
         lines: BagLine[];
+        dropped?: DroppedLine[];
       };
+
+      // Named, not hidden. One retired sku used to blank the whole basket.
+      setDropped(c.dropped ?? []);
 
       // The priced cart holds charged lines only; gifts come from the raw bag
       // so they can be shown at zero without ever entering the total.
@@ -199,6 +211,13 @@ export function CartClient() {
   return (
     <div className="ct-wrap">
       <div className="cs-stack">
+        {/* A line the shop stopped selling leaves the total but not the page.
+            Blanking the whole basket over one of these was the old behaviour. */}
+        {dropped.map((d) => (
+          <div key={d.sku_id} className="st-note" style={{ borderColor: "var(--nl-rust)" }}>
+            <strong>{d.title}</strong> was removed from your basket. {d.reason}
+          </div>
+        ))}
         {cart.lines.map((l) => (
           <div key={l.sku_id} className="st-card ct-line">
             <div>

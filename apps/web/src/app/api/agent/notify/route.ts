@@ -1,4 +1,5 @@
-import { DEMO_CART_ID, payableLines } from "@/server/cart";
+import { payable, readBasket } from "@/server/cart";
+import { enteredCode } from "@/server/shop-code";
 import { requireShopCode } from "@/server/shop-code";
 import { suggestForCart } from "@/server/suggest";
 
@@ -22,7 +23,7 @@ export async function POST(request: Request): Promise<Response> {
     // No body is fine; the demo cart is the default.
   }
 
-  const lines = payableLines(body.cart_id ?? DEMO_CART_ID);
+  const lines = payable(await readBasket(await enteredCode()));
   if (lines.length === 0) {
     return Response.json({ suggestions: [], suggestion: null, reason: "cart is empty" });
   }

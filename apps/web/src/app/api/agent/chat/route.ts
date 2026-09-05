@@ -8,7 +8,8 @@ import {
   search_catalog,
   suggest_upsell,
 } from "@/server/tools";
-import { DEMO_CART_ID } from "@/server/cart";
+import { payable, readBasket, writeBasket, type BasketLine } from "@/server/cart";
+import { enteredCode } from "@/server/shop-code";
 import { requireShopCode } from "@/server/shop-code";
 
 export const dynamic = "force-dynamic";
@@ -81,7 +82,11 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const message = payload.message ?? "";
-  const cartId = payload.cart_id ?? DEMO_CART_ID;
+  // The basket travels in the shopper's cookie. `cart_id` survives only as a
+  // label on the audit trail; it is not a lookup key any more.
+  const shopCode = await enteredCode();
+  const cartId = payload.cart_id ?? "cart_cookie";
+  let bag: BasketLine[] = await readBasket(shopCode);
   const steps: Step[] = [];
 
   // --- search, if the shopper named something ------------------------------
@@ -111,10 +116,11 @@ export async function POST(request: Request): Promise<Response> {
 
     // "add the upgrade" is resolved from the catalog, never invented.
     if (/^(the\s+)?(upgrade|upsell|suggestion)$/i.test(raw)) {
-      const suggestions = suggest_upsell(cartId);
+      const suggestions = suggest_upsell(bag);
       const first = suggestions[0];
       if (first !== undefined) {
-        const out = add_to_cart(cartId, first.sku_id, 1);
+        const out = add_to_cart(bag, first.sku_id, 1);
+        bag = out.lines;
         steps.push({
           tool: "suggest_upsell",
           input: { cart_id: cartId },
@@ -156,7 +162,8 @@ export async function POST(request: Request): Promise<Response> {
           say: NOT_FOUND_REPLY,
         });
       } else {
-        const out = add_to_cart(cartId, product.id, 1);
+        const out = add_to_cart(bag, product.id, 1);
+        bag = out.lines;
         steps.push({
           tool: "add_to_cart",
           input: { sku_id: product.id, qty: 1 },
@@ -173,7 +180,8 @@ export async function POST(request: Request): Promise<Response> {
   if (removeMatch !== null && wants(message, "remove")) {
     const product = resolveSku((removeMatch[1] ?? "").trim());
     if (product !== null) {
-      const out = remove_from_cart(cartId, product.id);
+      const out = remove_from_cart(bag, product.id);
+      bag = out.lines;
       steps.push({
         tool: "remove_from_cart",
         input: { sku_id: product.id },
@@ -186,7 +194,7 @@ export async function POST(request: Request): Promise<Response> {
   // --- upsell on request ---------------------------------------------------
 
   if (wants(message, "upsell", "recommend", "suggest", "what else", "anything else")) {
-    const suggestions = suggest_upsell(cartId);
+    const suggestions = suggest_upsell(bag);
     steps.push({
       tool: "suggest_upsell",
       input: { cart_id: cartId },
@@ -200,7 +208,7 @@ export async function POST(request: Request): Promise<Response> {
 
   // --- campaign ------------------------------------------------------------
 
-  const campaign = apply_campaign(cartId);
+  const campaign = apply_campaign(bag);
   if (campaign.campaign !== null || campaign.stale.length > 0) {
     steps.push({
       tool: "apply_campaign",
@@ -226,7 +234,7 @@ export async function POST(request: Request): Promise<Response> {
     askedBps !== null || quoted !== null || wants(message, "checkout", "pay", "buy", "propose");
 
   if (wantsCheckout) {
-    const cart = get_cart(cartId);
+    const cart = get_cart(bag);
 
     if (cart.lines.length === 0) {
       steps.push({
@@ -242,6 +250,7 @@ export async function POST(request: Request): Promise<Response> {
 
       const result = await propose_money_action({
         cart_id: cartId,
+        lines: bag,
         requested_discount_bps: requested,
         // Anything the shopper typed rides along as free text and is inert.
         free_text: message,
@@ -266,7 +275,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   if (steps.length === 0) {
-    const cart = get_cart(cartId);
+    const cart = get_cart(bag);
     steps.push({
       tool: "get_cart",
       input: { cart_id: cartId },
@@ -274,6 +283,10 @@ export async function POST(request: Request): Promise<Response> {
       say: 'Try: "add the niacinamide serum", "what else?", or "15% off and add the upgrade".',
     });
   }
+
+  // One write per request. The bag above is the only copy that mattered; this
+  // is where it becomes the shopper's cookie again.
+  if (shopCode !== null) await writeBasket(shopCode, bag);
 
   return Response.json({ cart_id: cartId, steps }, { status: 200 });
 }

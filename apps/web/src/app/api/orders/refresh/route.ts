@@ -1,6 +1,6 @@
 import { allOrders, getOrder, markPaid, type Order } from "@countersign/orders";
 
-import { DEMO_CART_ID, clearCart } from "@/server/cart";
+import { clearBasket } from "@/server/cart";
 import { burnForPaidOrder } from "@/server/burn";
 import { fetchPaymentLink } from "@countersign/razorpay";
 
@@ -51,7 +51,10 @@ async function refresh(order: Order, creds: { keyId: string; keySecret: string }
   // /cart after paying should see an empty basket, not the one they just paid
   // for — which was the fastest way to accidentally buy the same thing twice.
   // Only the paid bag is cleared; an unpaid one is still theirs to finish.
-  clearCart(DEMO_CART_ID);
+  //
+  // The basket is this browser's cookie, so this clears the bag of whoever is
+  // asking — which is right: they are the one who just paid.
+  await clearBasket();
 
   return flipped;
 }

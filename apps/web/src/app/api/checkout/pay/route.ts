@@ -2,7 +2,8 @@ import { allOrders } from "@countersign/orders";
 import { allQuotes, isExpired } from "@countersign/quotes";
 
 import { issueLinkForQuote } from "@/server/checkout";
-import { DEMO_CART_ID, getCart, payableLines } from "@/server/cart";
+import { payable, readBasket } from "@/server/cart";
+import { enteredCode } from "@/server/shop-code";
 import { cartFingerprint } from "@/server/fingerprint";
 import { mintAndRegisterDemoIntent } from "@/server/mandates";
 import { buyerId } from "@/server/require-role";
@@ -34,11 +35,24 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   // Gifts never reach the money path: the amount is the charged lines only.
-  const bag = getCart(body.cart_id ?? DEMO_CART_ID);
-  const lines = payableLines(body.cart_id ?? DEMO_CART_ID);
+  // The bag is this browser's cookie, so this prices exactly what the shopper
+  // is looking at rather than whatever a shared server map happened to hold.
+  const bag = await readBasket(await enteredCode());
+  const lines = payable(bag);
 
+  /**
+   * An empty bag stops here, before Razorpay is touched at all.
+   *
+   * Not an oversight to guard against — a real click. The Pay button is on a
+   * page whose contents can go to zero while it is open, and asking a payment
+   * provider to bill nothing is both an error and a wasted call against an
+   * account with a lifetime link cap.
+   */
   if (lines.length === 0) {
-    return Response.json({ error: "Your bag is empty." }, { status: 400 });
+    return Response.json(
+      { error: "empty_basket", message: "Your bag is empty, so there is nothing to pay for." },
+      { status: 400 },
+    );
   }
 
   const fingerprint = cartFingerprint(lines);
