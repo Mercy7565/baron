@@ -1,4 +1,5 @@
 import {
+  fetchOrder,
   fetchPaymentLink,
   listOrders,
   listPaymentLinks,
@@ -154,6 +155,37 @@ async function fromRazorpay(): Promise<{
   }
 
   const orderById = new Map(orders.map((o) => [o.id, o]));
+
+  /**
+   * Which offer actually attached.
+   *
+   * The orders *collection* returns `offers: null` even on an order that
+   * carries one — the same list-versus-read gap the payment links have, and
+   * just as silent. So the orders behind captured payments are read
+   * individually, capped, and only where the list left the question open.
+   */
+  const capturedOrderIds = [
+    ...new Set(
+      payments
+        .filter((p) => p.status === "captured" && p.order_id !== null)
+        .map((p) => p.order_id as string)
+        .filter((id) => (orderById.get(id)?.offers ?? null) === null),
+    ),
+  ].slice(0, RESOLVE_LINK_CAP);
+
+  const readBack = await Promise.all(
+    capturedOrderIds.map(async (id) => {
+      try {
+        const r = await fetchOrder(creds, id);
+        return r.ok ? r.data : null;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  for (const o of readBack) {
+    if (o !== null) orderById.set(o.id, o);
+  }
 
   /**
    * Which payment paid which link.

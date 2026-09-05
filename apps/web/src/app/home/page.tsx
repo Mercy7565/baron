@@ -58,6 +58,13 @@ export default function CustomerHome() {
             <p className="st-muted" style={{ margin: 0, fontSize: 15 }}>
               {b}
             </p>
+            {/* Said in the future tense, because it does not work yet. */}
+            {h === "Then a link" && (
+              <p className="st-muted" style={{ margin: "8px 0 0", fontSize: 14, opacity: 0.75 }}>
+                When Razorpay enables server-to-server charges on this account, Baron can complete
+                the payment itself from the saved token. Until then you open the link.
+              </p>
+            )}
           </div>
         ))}
       </section>

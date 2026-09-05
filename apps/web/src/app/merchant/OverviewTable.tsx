@@ -15,6 +15,17 @@ export interface OverviewRow {
   /** The coupon percentage behind offer_id, e.g. "15%". */
   coupon: string | null;
   outcome: string;
+
+  /**
+   * False when Razorpay reports the payment but our own log no longer holds the
+   * decision. Such a row shows what was charged and refuses to show an ask or a
+   * verdict it cannot evidence.
+   */
+  verdict_known: boolean;
+  captured_paise: number | null;
+  payment_id: string | null;
+  payment_link_id: string | null;
+  shop_code: string | null;
 }
 
 const rupees = (paise: number): string => `₹${(paise / 100).toLocaleString("en-IN")}`;
@@ -57,6 +68,7 @@ export function OverviewTable({ rows }: { rows: OverviewRow[] }) {
                 <th className="num">Allowed</th>
                 <th>Why</th>
                 <th>Offer</th>
+                <th>Payment</th>
                 <th>State</th>
               </tr>
             </thead>
@@ -75,12 +87,18 @@ export function OverviewTable({ rows }: { rows: OverviewRow[] }) {
                   <td>
                     {r.campaign ?? r.who}
                     <div className="mc-tiny">
-                      {r.campaign === null ? r.who_kind : `${r.who_kind} · ${r.who}`}
+                      {r.shop_code ?? (r.campaign === null ? r.who_kind : `${r.who_kind} · ${r.who}`)}
                     </div>
                   </td>
-                  <td className="num">{r.asked_bps / 100}%</td>
+                  {/* A dash, not a zero. "0%" is a claim that nothing was
+                      asked for; this row simply does not know. */}
+                  <td className="num">{r.verdict_known ? `${r.asked_bps / 100}%` : "—"}</td>
                   <td className="num">
-                    <strong>{r.applied_bps / 100}%</strong>
+                    {r.verdict_known || r.applied_bps > 0 ? (
+                      <strong>{r.applied_bps / 100}%</strong>
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   <td style={{ maxWidth: 330 }}>{r.cause}</td>
                   <td>
@@ -100,6 +118,12 @@ export function OverviewTable({ rows }: { rows: OverviewRow[] }) {
                         </span>
                         <div className="mc-tiny mono">{r.offer_id}</div>
                       </>
+                    )}
+                  </td>
+                  <td className="mono" style={{ fontSize: 11.5 }}>
+                    {r.payment_id ?? r.payment_link_id ?? "—"}
+                    {r.captured_paise !== null && (
+                      <div className="mc-tiny">{rupees(r.captured_paise)} captured</div>
                     )}
                   </td>
                   <td>

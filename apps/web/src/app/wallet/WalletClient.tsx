@@ -93,7 +93,7 @@ export function WalletClient({
         <input
           value={pan}
           onChange={(e) => setPan(e.target.value)}
-          placeholder="4111 1111 1111 1111"
+          placeholder={testCard}
           inputMode="numeric"
           autoComplete="off"
         />

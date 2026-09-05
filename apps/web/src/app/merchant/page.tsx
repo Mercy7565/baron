@@ -6,7 +6,7 @@ import { ConsoleChrome } from "@/components/ConsoleChrome";
 import { CATALOG } from "@/lib/catalog";
 import { DEFAULT_MARGIN_FLOOR_BPS, DEV_POLICY } from "@/lib/policy";
 import { campaignRows } from "@/server/campaign-rows";
-import { causeOf, couponPercentOf, ledgerRows, paidLedgerRows } from "@/server/ledger-rows";
+import { causeOf, couponPercentOf, ledgerRows, paidDecisionRows } from "@/server/ledger-rows";
 
 import { MarginFloor, type FloorSample } from "./MarginFloor";
 import { OverviewTable, type OverviewRow } from "./OverviewTable";
@@ -30,7 +30,7 @@ const rupees = (paise: number): string => `₹${(paise / 100).toLocaleString("en
  * Now: the counters only include decisions whose coupon this store can still
  * attach, and one table says what happened and why in a sentence.
  */
-export default function MerchantOverview() {
+export default async function MerchantOverview() {
   const now = new Date();
   const all = ledgerRows();
 
@@ -106,9 +106,9 @@ export default function MerchantOverview() {
 
   // Paid purchases only, newest first, five of them. A merchant's headline
   // table should hold money that arrived, not every question a shopper asked.
-  const rows: OverviewRow[] = paidLedgerRows()
-    .slice(0, 5)
-    .map((r) => ({
+  // The last five money movements by time, from Razorpay with the local log
+  // folded in — not five rows of whatever /tmp happens to still hold.
+  const rows: OverviewRow[] = (await paidDecisionRows()).slice(0, 5).map((r) => ({
     key: r.key,
     ts: r.ts,
     subtotal_paise: r.subtotal_paise,
@@ -122,6 +122,11 @@ export default function MerchantOverview() {
     attached: r.attached,
     coupon: couponPercentOf(r.offer_id),
     outcome: r.outcome,
+    verdict_known: r.verdict_known,
+    captured_paise: r.captured_paise,
+    payment_id: r.payment_id,
+    payment_link_id: r.payment_link_id,
+    shop_code: r.shop_code,
   }));
 
   return (

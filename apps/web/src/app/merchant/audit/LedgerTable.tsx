@@ -105,10 +105,15 @@ export function LedgerTable({
                     })}
                   </td>
                   <td>
-                    <span className="mc-pill" data-tone={r.actor_kind === "agent" ? "paused" : undefined}>
-                      {r.actor_kind}
+                    <span
+                      className="mc-pill"
+                      data-tone={
+                        !r.verdict_known ? "blocked" : r.actor_kind === "agent" ? "paused" : undefined
+                      }
+                    >
+                      {r.verdict_known ? r.actor_kind : "razorpay"}
                     </span>
-                    <div className="mc-tiny">{r.actor}</div>
+                    <div className="mc-tiny">{r.shop_code ?? r.actor}</div>
                   </td>
                   <td style={{ maxWidth: 190 }}>{r.asked}</td>
                   <td style={{ maxWidth: 220 }}>{r.found}</td>
@@ -123,12 +128,27 @@ export function LedgerTable({
                     )}
                   </td>
                   <td className="num" style={{ whiteSpace: "nowrap" }}>
-                    <strong>
-                      {r.asked_bps / 100}% → {r.applied_bps / 100}%
-                    </strong>
-                    <div className="mc-tiny">
-                      ₹{(r.subtotal_paise / 100).toFixed(2)} → ₹{(r.total_paise / 100).toFixed(2)}
-                    </div>
+                    {/* A row we cannot explain shows what was charged and says
+                        so. "0% → 0%" would be a claim about a decision that is
+                        not on file. */}
+                    {r.verdict_known ? (
+                      <>
+                        <strong>
+                          {r.asked_bps / 100}% → {r.applied_bps / 100}%
+                        </strong>
+                        <div className="mc-tiny">
+                          ₹{(r.subtotal_paise / 100).toFixed(2)} → ₹
+                          {(r.total_paise / 100).toFixed(2)}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <strong>
+                          ₹{((r.captured_paise ?? r.total_paise) / 100).toFixed(2)}
+                        </strong>
+                        <div className="mc-tiny">captured by Razorpay</div>
+                      </>
+                    )}
                   </td>
                   <td>
                     {r.offer_id === null ? (
@@ -164,7 +184,13 @@ export function LedgerTable({
                     >
                       {r.outcome}
                     </span>
-                    {r.payment_id !== null && <div className="mc-tiny mono">{r.payment_id}</div>}
+                    {r.payment_id !== null ? (
+                      <div className="mc-tiny mono">{r.payment_id}</div>
+                    ) : (
+                      r.payment_link_id !== null && (
+                        <div className="mc-tiny mono">{r.payment_link_id}</div>
+                      )
+                    )}
                   </td>
                   <td className="no-print">
                     <button

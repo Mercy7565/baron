@@ -10,6 +10,20 @@ import { CATALOG } from "@/lib/catalog";
 import { DEV_POLICY } from "@/lib/policy";
 import { bestClearableBps } from "@/server/coupons";
 import { isLiveQuote } from "@/server/live-rows";
+import { moneyLedger, type MoneyRow } from "@/server/money-rows";
+import { shopCodeFor } from "@/server/shop-code";
+import { DEFAULT_TENANT } from "@/server/users";
+
+/**
+ * The code of the one shop this console belongs to.
+ *
+ * A merchant reading their own ledger is reading their own shop, so the code is
+ * theirs. Null before a catalog exists, which is when there is nothing to sell
+ * and nothing to have bought.
+ */
+function shopCodeForThisStore(): string | null {
+  return shopCodeFor(DEFAULT_TENANT);
+}
 
 /**
  * One money decision, assembled for a human to read.
@@ -55,6 +69,23 @@ export interface LedgerRow {
   live: boolean;
   /** True when a campaign was in play but had no budget left. */
   campaign_dry: boolean;
+
+  /**
+   * Whether we still hold the decision behind this payment.
+   *
+   * False for a payment Razorpay reports that our own log no longer describes —
+   * the quote and audit rows live in /tmp on a serverless host and a cold start
+   * takes them. Such a row is real money and must still appear; what it may not
+   * do is claim a verdict, an ask or a margin gate it cannot evidence.
+   */
+  verdict_known: boolean;
+  /** The shop this was bought from, when the row can be tied to one. */
+  shop_code: string | null;
+  /** What Razorpay actually took, which is not always what was asked for. */
+  captured_paise: number | null;
+  payment_link_id: string | null;
+  /** Where the row came from, so the page can be honest about how much it knows. */
+  source: "local" | "razorpay" | "both";
 }
 
 const rupees = (paise: number): string => `₹${(paise / 100).toFixed(2)}`;
@@ -159,6 +190,15 @@ export function ledgerRows(): LedgerRow[] {
         const seed = campaignId === null ? null : campaignById(campaignId);
         return seed !== null && affordableHintBps(seed, q.subtotal_paise) === 0;
       })(),
+
+      // A row built from our own quote log knows its own decision by
+      // definition. The Razorpay-only rows merged in later are the ones that
+      // do not.
+      verdict_known: true,
+      shop_code: shopCodeForThisStore(),
+      captured_paise: order?.status === "paid" ? order.amount_paise : null,
+      payment_link_id: q.payment_link_id,
+      source: "local",
     };
   });
 
@@ -196,6 +236,15 @@ export function couponPercentOf(offerId: string | null): string | null {
  * nothing here says "clamped" without saying what did the clamping.
  */
 export function causeOf(r: LedgerRow): string {
+  // No decision on file. Every branch below reasons from asked_bps, the margin
+  // and the ladder gates; running them on zeros would invent a reason for a
+  // payment we cannot explain, which is worse than admitting we cannot.
+  if (!r.verdict_known) {
+    return r.offer_id === null
+      ? "Captured by Razorpay. The decision behind it is no longer in the local log."
+      : `Captured by Razorpay with ${r.offer_id}. The decision behind it is no longer in the local log.`;
+  }
+
   if (r.verdict === "REJECT") return "Policy refused the basket, so no order was created.";
 
   const clearable = bestClearableBps(r.subtotal_paise, r.margin_bps);
@@ -247,6 +296,17 @@ export function causeOf(r: LedgerRow): string {
 export function whyRow(r: LedgerRow): string {
   const parts: string[] = [];
 
+  if (!r.verdict_known) {
+    parts.push(
+      `Razorpay reports this payment as captured${r.captured_paise === null ? "" : ` for ${rupees(r.captured_paise)}`}${r.payment_id === null ? "" : ` (${r.payment_id})`}.`,
+    );
+    if (r.offer_id !== null) parts.push(`The order carried ${r.offer_id}.`);
+    parts.push(
+      "What was asked for and what policy allowed are not on this row: the quote it came from is no longer in the local log. The payment itself is not in doubt — it is in the Razorpay dashboard.",
+    );
+    return parts.join(" ");
+  }
+
   if (r.verdict === "REJECT") {
     parts.push("Policy refused this basket outright, so no Razorpay order and no link were created.");
   } else if (r.applied_bps === 0 && r.asked_bps > 0) {
@@ -295,6 +355,22 @@ export function whyRow(r: LedgerRow): string {
 
 /** The copy-to-clipboard form of one row: readable, and complete enough to audit. */
 export function rowAsText(r: LedgerRow): string {
+  if (!r.verdict_known) {
+    return [
+      `Time          ${new Date(r.ts).toISOString()}`,
+      `Shop          ${r.shop_code ?? "(unknown)"}`,
+      `Verdict       captured by Razorpay (decision not in the local log)`,
+      `Coupon        asked (unknown) -> allowed (unknown)`,
+      `Offer         ${r.offer_id ?? "none"}`,
+      `Money         ${r.captured_paise === null ? "(unknown)" : rupees(r.captured_paise)} captured`,
+      `Payment       ${r.payment_id ?? "(none)"}`,
+      `Link          ${r.payment_link_id ?? "(none)"}`,
+      `Quote         ${r.quote_id === "" ? "(none)" : r.quote_id}`,
+      ``,
+      `Why: ${whyRow(r)}`,
+    ].join("\n");
+  }
+
   return [
     `Decision      ${r.decision_id ?? "(none)"}`,
     `Time          ${new Date(r.ts).toISOString()}`,
@@ -310,10 +386,137 @@ export function rowAsText(r: LedgerRow): string {
     `Outcome       ${r.outcome}${r.payment_id === null ? "" : ` (${r.payment_id})`}`,
     `Quote         ${r.quote_id}`,
     `Order         ${r.order_id ?? "(none)"}`,
+    `Shop          ${r.shop_code ?? "(unknown)"}`,
     `Chain seq     ${r.seq ?? "(none)"}`,
     `Hash          ${r.hash ?? "(none)"}`,
     `Prev hash     ${r.prev_hash ?? "(none)"}`,
     ``,
     `Why: ${whyRow(r)}`,
   ].join("\n");
+}
+
+/**
+ * Every payment, whether or not our own log still remembers deciding it.
+ *
+ * `paidLedgerRows` reads the quote log, which lives in `/tmp` on a serverless
+ * host and does not survive a cold start. The audit page and the merchant
+ * overview therefore went blank while the Razorpay dashboard showed captures —
+ * the same failure the orders pages had, in the one place whose entire claim is
+ * that it can account for money.
+ *
+ * So Razorpay is the backstop. Anything it reports as captured becomes a row.
+ * Where the local log still describes the decision behind that payment, the two
+ * are joined and the row says everything it used to. Where it does not, the row
+ * says what it can prove and marks itself `verdict_known: false` rather than
+ * inventing an ask, a margin gate or a verdict — and rather than disappearing,
+ * which would tell a merchant nothing ever happened.
+ */
+export async function paidDecisionRows(): Promise<LedgerRow[]> {
+  let local: LedgerRow[] = [];
+  try {
+    local = paidLedgerRows();
+  } catch {
+    // A missing or torn log is "no cache", never a broken page.
+    local = [];
+  }
+
+  let ledger: Awaited<ReturnType<typeof moneyLedger>>;
+  try {
+    ledger = await moneyLedger();
+  } catch {
+    return local;
+  }
+
+  const byPaymentId = new Map(local.filter((r) => r.payment_id !== null).map((r) => [r.payment_id, r]));
+  const byQuoteId = new Map(local.map((r) => [r.quote_id, r]));
+  const byLinkId = new Map(
+    local.filter((r) => r.payment_link_id !== null).map((r) => [r.payment_link_id, r]),
+  );
+
+  const used = new Set<string>();
+  const out: LedgerRow[] = [];
+
+  for (const m of ledger.rows) {
+    if (m.status !== "paid") continue;
+
+    const hit =
+      (m.payment_id === null ? undefined : byPaymentId.get(m.payment_id)) ??
+      (m.quote_id === null ? undefined : byQuoteId.get(m.quote_id)) ??
+      (m.payment_link_id === null ? undefined : byLinkId.get(m.payment_link_id));
+
+    if (hit !== undefined) {
+      used.add(hit.key);
+      // The local decision, with the figure Razorpay actually took. Those are
+      // deliberately different numbers now that the coupon is applied by
+      // Razorpay against a pre-coupon link amount.
+      out.push({
+        ...hit,
+        captured_paise: m.amount_paise,
+        payment_id: hit.payment_id ?? m.payment_id,
+        payment_link_id: hit.payment_link_id ?? m.payment_link_id,
+        source: "both",
+      });
+      continue;
+    }
+
+    out.push(razorpayOnlyRow(m));
+  }
+
+  // Anything the log has that Razorpay did not return — older than its window,
+  // or captured against a different account. Still real history.
+  for (const r of local) {
+    if (!used.has(r.key)) out.push(r);
+  }
+
+  out.sort((a, b) => (a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0));
+  return out;
+}
+
+/**
+ * A payment we can see but cannot explain.
+ *
+ * Every field that would require the quote is left at a value the renderers
+ * treat as absent, and `verdict_known` is false so `causeOf`, `whyRow` and
+ * `rowAsText` refuse to reason from it. The numbers that are present came from
+ * Razorpay and are the ones a merchant can check in their dashboard.
+ */
+function razorpayOnlyRow(m: MoneyRow): LedgerRow {
+  return {
+    key: m.key,
+    ts: m.paid_at ?? m.created_at,
+    actor: "unknown",
+    actor_kind: "customer",
+    asked: m.summary === "" ? "not recorded" : m.summary,
+    found: m.summary === "" ? "not recorded" : m.summary,
+    campaign: null,
+    upsell_accepted: null,
+    asked_bps: 0,
+    applied_bps: m.applied_bps ?? 0,
+    offer_id: m.offer_id,
+    attached: m.offer_id === null ? null : true,
+    // The order amount is the pre-coupon basket when we raised the link that
+    // way; falling back to the captured figure keeps the column honest rather
+    // than showing a zero.
+    subtotal_paise: m.order_amount_paise ?? m.amount_paise,
+    total_paise: m.amount_paise,
+    outcome: "paid",
+    payment_id: m.payment_id,
+    short_url: m.short_url,
+    verdict: "CAPTURED",
+    decision_id: null,
+    quote_id: m.quote_id ?? "",
+    order_id: m.razorpay_order_id,
+    seq: null,
+    hash: null,
+    prev_hash: null,
+    margin_bps: 0,
+    live: true,
+    campaign_dry: false,
+
+    verdict_known: false,
+    shop_code: m.quote_id === null ? null : shopCodeForThisStore(),
+    captured_paise: m.amount_paise,
+    payment_link_id: m.payment_link_id,
+    source: "razorpay",
+  };
 }

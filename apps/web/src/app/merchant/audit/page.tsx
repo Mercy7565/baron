@@ -1,16 +1,25 @@
 import { auditLogPath, readAuditRecords, verifyAuditChain } from "@countersign/ledger";
 
 import { ConsoleChrome } from "@/components/ConsoleChrome";
-import { couponPercentOf, paidLedgerRows, rowAsText, whyRow } from "@/server/ledger-rows";
+import { couponPercentOf, paidDecisionRows, rowAsText, whyRow } from "@/server/ledger-rows";
 
 import { LedgerTable } from "./LedgerTable";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export default function MerchantAudit() {
+export default async function MerchantAudit() {
   const chain = verifyAuditChain(readAuditRecords());
-  const rows = paidLedgerRows();
+
+  /**
+   * Razorpay first, the local log folded in.
+   *
+   * This read the quote log alone, which lives in /tmp on a serverless host and
+   * does not survive a cold start — so the one page whose whole claim is that
+   * it can account for money went blank while the dashboard showed captures.
+   */
+  const rows = await paidDecisionRows();
+  const unexplained = rows.filter((r) => !r.verdict_known).length;
 
   // Computed on the server so the client component stays presentational and the
   // copied text is identical to what the page rendered.
@@ -53,6 +62,14 @@ export default function MerchantAudit() {
       >
         {chain.ok ? `CHAIN OK · ${rows.length} paid` : `CHAIN BROKEN AT seq=${chain.brokenAt}`}
       </div>
+
+      {unexplained > 0 && (
+        <div className="mc-banner" style={{ marginBottom: 12 }}>
+          {unexplained} of these {rows.length} payments are read from Razorpay only. They are real
+          captures you can find in your dashboard; the decision behind them is no longer in the
+          local log, so their rows say what was charged and not what was asked.
+        </div>
+      )}
 
       <div className="print-only mc-printhead">
         <strong>Baron — money decision ledger.</strong> Exported {printedAt.toISOString()}.{" "}
