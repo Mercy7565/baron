@@ -39,7 +39,26 @@ export async function POST(request: Request): Promise<Response> {
   // Gifts never reach the money path: the amount is the charged lines only.
   // The bag is this browser's cookie, so this prices exactly what the shopper
   // is looking at rather than whatever a shared server map happened to hold.
-  const bag = await readBasket(await enteredCode());
+  /**
+   * Which shop, before anything else.
+   *
+   * Without a code there is no basket to read, so this used to fall through to
+   * the empty-basket branch and tell a shopper their bag was empty when the
+   * real problem was that they had not said which shop they were in. Two
+   * different problems deserve two different sentences.
+   */
+  const shopCode = await enteredCode();
+  if (shopCode === null) {
+    return Response.json(
+      {
+        error: "no_shop_code",
+        message: "Enter a shop code first — the demo store is BARON-SKIN — then add to your bag.",
+      },
+      { status: 403 },
+    );
+  }
+
+  const bag = await readBasket(shopCode);
   const lines = payable(bag);
 
   /**
